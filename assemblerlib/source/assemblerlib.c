@@ -23,6 +23,7 @@ bool is_alpha(char c)
 
 char tokenizer_next(tokenizer* t)
 {
+	// check if past EOF
 	return *t->current++;
 }
 
