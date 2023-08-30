@@ -99,4 +99,75 @@ rightmost 8 bits of register A.
 
 ![A program that demonstrates the technique for performing I\O](fig2_1-p45.png)
 
+### Assembler Directives
+
+These statements are not translated into machine instruction, Instead, they
+provide instructions to the assembler itself.
+
+| Directive | Description |
+|-----------|-------------|
+| START | Specify name and starting address for the program. |
+| END | Indicate the end of the source program and (optionally) specify the first executable instruction in the program. |
+| BYTE | Generate one-word character or hexadecimal constant, occupying as many bytes as needed to represent the constant. |
+| WORD | Generate one-word integer constant. |
+| RESB | Reserve the indicated number of bytes for a data area. |
+| RESW | Reserve the indicated number of words for a data area. |
+
+### Records/Object Code
+
+The assembler must write the generated object code onto some output device. The
+simple obect program format we use contains three types of records: Header, Text,
+and End.
+
+| Record | Description |
+|--------|-------------|
+| Header | Contains the program name, starting address, and length. |
+| Text | Contains the translated (i.e., machine code) instructions and data of the program, together with an indication of the addresses where these are to be loaded. |
+| End | Marks the end of the object program and specifies the address in the program where execution is to begin.* |
+
+* This is taken from the operand of the program's End statement. If no operand is
+  specified, the address of the first executable instruction is used.
+
+The formats used for the record are as follows:
+
+#### Header Record:
+
+| Column | Contents |
+|--------|----------|
+| Col. 1 | H |
+| Col. 2-7 | Program name |
+| Col. 8-13 | Starting address of the object program (hexadecimal) |
+| Col. 14-19 | Length of object program in bytes (hexadecimal) |
+
+##### Text record:
+
+| Column | Contents |
+|--------|----------|
+| Col. 1 | T |
+| Col. 2-7 | Starting address for object code in this record (hexadecimal) |
+| Col. 8-9 | Length of object code in this record in bytes (hexadecimal) |
+| Col. 10-69 | Object code, represented in hexadecimal (2 columns per byte of object code) |
+
+##### End record:
+
+| Column | Contents |
+|--------|----------|
+| Col. 1 | T |
+| Col. 2-7 | Starting address for object code in this record (hexadecimal) |
+| Col. 8-9 | Length of object code in this record in bytes (hexadecimal) |
+| Col. 10-69 | Object code, represented in hexadecimal (2 columnts per byte of object code) |
+
+##### End record:
+
+| Column | Contents |
+|--------|----------|
+| Col. 1 | E |
+| Col. 2-7 | Address of first executable instruction in object program (hexadecimal) |
+
+Term *column* refers to the **byte**.
+
+[Fig. 2.2 Program with object code.](fig2_2-p47.png)
+
+[Obect program corresponding to Fig. 2.2, using this format.](fig2_3-p49.png)
+
 
