@@ -97,6 +97,6 @@ rightmost 8 bits of register A.
     - WD (Write Data) -- must wait until the device is ready. TD must be done for
     each byte to be written.
 
-[A program that demonstrates the technique for performing I\O](fig2_1-p45.png)
+![A program that demonstrates the technique for performing I\O](fig2_1-p45.png)
 
 
