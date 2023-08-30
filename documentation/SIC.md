@@ -97,7 +97,7 @@ rightmost 8 bits of register A.
     - WD (Write Data) -- must wait until the device is ready. TD must be done for
     each byte to be written.
 
-![A program that demonstrates the technique for performing I\O](fig2_1-p45.png)
+[A program that demonstrates the technique for performing I\O](fig2_1-p45.png)
 
 ### Assembler Directives
 
@@ -147,15 +147,6 @@ The formats used for the record are as follows:
 | Col. 2-7 | Starting address for object code in this record (hexadecimal) |
 | Col. 8-9 | Length of object code in this record in bytes (hexadecimal) |
 | Col. 10-69 | Object code, represented in hexadecimal (2 columns per byte of object code) |
-
-##### End record:
-
-| Column | Contents |
-|--------|----------|
-| Col. 1 | T |
-| Col. 2-7 | Starting address for object code in this record (hexadecimal) |
-| Col. 8-9 | Length of object code in this record in bytes (hexadecimal) |
-| Col. 10-69 | Object code, represented in hexadecimal (2 columnts per byte of object code) |
 
 ##### End record:
 
