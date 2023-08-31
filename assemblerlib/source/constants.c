@@ -61,3 +61,13 @@ const opcode_table_entry OPCODE_TABLE[NUM_OPCODE_TABLE_ENTRIES] =
 	{.name = "TIO",    .opcode = OP_TIO   },
 	{.name = "TIXR",   .opcode = OP_TIXR  }
 };
+
+const keyword_table_entry KEYWORD_TABLE[NUM_KEYWORDS] =
+{
+	{.name = "START", .token_id = TOKEN_START},
+	{.name = "END",   .token_id = TOKEN_END  },
+	{.name = "BYTE",  .token_id = TOKEN_BYTE },
+	{.name = "WORD",  .token_id = TOKEN_WORD },
+	{.name = "RESB",  .token_id = TOKEN_RESB },
+	{.name = "RESW",  .token_id = TOKEN_RESW }
+};

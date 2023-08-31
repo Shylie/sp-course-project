@@ -9,6 +9,17 @@
 
 #include <stdbool.h>
 
+enum
+{
+	FLAG_NONE = 0,
+	FLAG_N = 1 << 5,
+	FLAG_I = 1 << 4,
+	FLAG_X = 1 << 3,
+	FLAG_B = 1 << 2,
+	FLAG_P = 1 << 1,
+	FLAG_E = 1 << 0
+};
+
 typedef struct
 {
 	enum
@@ -79,30 +90,8 @@ typedef struct
 		OP_TIXR   = 0xB8
 	} code; 
 
-	union
-	{
-		struct
-		{
-			unsigned char register1;
-			unsigned char register2;
-		} fmt2;
-
-		struct
-		{
-			enum
-			{
-				FLAG_NONE = 0,
-				FLAG_N = 1 << 0,
-				FLAG_I = 1 << 1,
-				FLAG_X = 1 << 2,
-				FLAG_B = 1 << 3,
-				FLAG_P = 1 << 4,
-				FLAG_E = 1 << 5
-			} flags;
-
-			unsigned int disp; // also used to represent address for format 4 instructions
-		} fmt34;
-	} as;
+	unsigned int flags; // also r1 for format 2
+	unsigned int disp; // also r2 for format 2, and address for format 4
 } operation;
 
 typedef struct
@@ -115,6 +104,7 @@ typedef struct
 {
 	symbol_table_entry* entries;
 	unsigned int        table_size;
+	unsigned int        max_table_size;
 } symbol_table;
 
 typedef struct
@@ -122,6 +112,12 @@ typedef struct
 	const char*  name;
 	unsigned int opcode;
 } opcode_table_entry;
+
+typedef struct
+{
+	const char*  name;
+	unsigned int token_id;
+} keyword_table_entry;
 
 typedef struct
 {
@@ -133,33 +129,59 @@ typedef struct
 		TOKEN_WORD,
 		TOKEN_RESB,
 		TOKEN_RESW,
-		TOKEN_LABEL,
+		TOKEN_TEXT,
 		TOKEN_OPERATION,
-		TOKEN_CONSTANT
+		TOKEN_CONSTANT,
+		TOKEN_NEWLINE,
+		TOKEN_COMMENT,
+		TOKEN_ERROR
 	} id;
 
 	const char*  lexeme;
 	unsigned int lexeme_length;
+
+	union
+	{
+		struct
+		{
+			unsigned int flags;
+		} operation;
+	} as;
 } token;
 
 typedef struct
 {
 	const char* start;
 	const char* current;
+	int line;
 } tokenizer;
 
 enum
 {
-	NUM_OPCODE_TABLE_ENTRIES = 59
+	NUM_OPCODE_TABLE_ENTRIES = 59,
+	NUM_KEYWORDS = 6
 };
 const extern opcode_table_entry OPCODE_TABLE[NUM_OPCODE_TABLE_ENTRIES];
+const extern keyword_table_entry KEYWORD_TABLE[NUM_KEYWORDS];
+
+symbol_table symbol_table_create();
+void symbol_table_delete(symbol_table* symtab);
+void symbol_table_add(symbol_table* symtab, symbol_table_entry entry);
+int symbol_table_search(symbol_table* symtab, const char* symbol);
+int symbol_table_search_n(symbol_table* symtab, const char* symbol, unsigned int n);
 
 bool is_alpha(char c);
+bool is_number(char c);
 
 int lookup_opcode(const char* text);
+int lookup_opcode_n(const char* text, unsigned int n);
+
+int lookup_keyword(const char* text);
+int lookup_keyword_n(const char* text, unsigned int n);
 
 char tokenizer_next(tokenizer* t);
 char tokenizer_peek(tokenizer* t);
+char tokenizer_peek_n(tokenizer* t, unsigned int n);
 token tokenizer_next_token(tokenizer* t);
 
 #endif//ASSEMBLERLIB_PRIVATE_H
