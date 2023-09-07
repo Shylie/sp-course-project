@@ -10,7 +10,7 @@ symbol_table symbol_table_create()
 	{
 		INITIAL_SIZE = 8
 	};
-	return (symbol_table){ .entries = realloc(NULL, INITIAL_SIZE * sizeof(symbol_table_entry)), .table_size = 0, .max_table_size = INITIAL_SIZE };
+	return (symbol_table){ .entries = malloc(INITIAL_SIZE * sizeof(symbol_table_entry)), .table_size = 0, .max_table_size = INITIAL_SIZE };
 }
 
 void symbol_table_delete(symbol_table* symtab)
@@ -70,11 +70,11 @@ bool is_number(char c)
 
 int lookup_opcode(const char* text)
 {
-	for (int i = 0; i < NUM_OPCODE_TABLE_ENTRIES; i++)
+	for (int i = 0; i < OPCODE_TABLE_SIZE; i++)
 	{
 		if (strcmp(text, OPCODE_TABLE[i].name) == 0)
 		{
-			return OPCODE_TABLE[i].opcode;
+			return i;
 		}
 	}
 
@@ -83,11 +83,11 @@ int lookup_opcode(const char* text)
 
 int lookup_opcode_n(const char* text, unsigned int n)
 {
-	for (int i = 0; i < NUM_OPCODE_TABLE_ENTRIES; i++)
+	for (int i = 0; i < OPCODE_TABLE_SIZE; i++)
 	{
 		if (strncmp(text, OPCODE_TABLE[i].name, n) == 0)
 		{
-			return OPCODE_TABLE[i].opcode;
+			return i;
 		}
 	}
 
@@ -96,11 +96,11 @@ int lookup_opcode_n(const char* text, unsigned int n)
 
 int lookup_keyword(const char* text)
 {
-	for (int i = 0; i < NUM_OPCODE_TABLE_ENTRIES; i++)
+	for (int i = 0; i < KEYWORD_TABLE_SIZE; i++)
 	{
 		if (strcmp(text, KEYWORD_TABLE[i].name) == 0)
 		{
-			return KEYWORD_TABLE[i].token_id;
+			return i;
 		}
 	}
 
@@ -109,59 +109,15 @@ int lookup_keyword(const char* text)
 
 int lookup_keyword_n(const char* text, unsigned int n)
 {
-	for (int i = 0; i < NUM_OPCODE_TABLE_ENTRIES; i++)
+	for (int i = 0; i < KEYWORD_TABLE_SIZE; i++)
 	{
 		if (strncmp(text, KEYWORD_TABLE[i].name, n) == 0)
 		{
-			return KEYWORD_TABLE[i].token_id;
+			return i;
 		}
 	}
 
 	return -1;
-}
-
-char tokenizer_next(tokenizer* t)
-{
-	const unsigned int offset = (unsigned int)(t->current - t->start);
-	if (offset >= strlen(t->start))
-	{
-		return 0;
-	}
-	else
-	{
-		return *t->current++;
-	}
-}
-
-char tokenizer_peek(tokenizer* t)
-{
-	return tokenizer_peek_n(t, 0);
-}
-
-char tokenizer_peek_n(tokenizer* t, unsigned int n)
-{
-	const unsigned int offset = (unsigned int)(t->current - t->start) + n;
-	if (offset >= strlen(t->start))
-	{
-		return 0;
-	}
-	else
-	{
-		return t->current[n];
-	}
-}
-
-token tokenizer_next_token(tokenizer* t)
-{
-	const char c = tokenizer_peek(t);
-	const char c2 = tokenizer_peek_n(t, 1);
-	if ((is_alpha(c)) ||
-		(c == '+' && is_alpha(c2)) ||
-		(c == '@' && is_alpha(c2)) ||
-		(c == '#' && is_alpha(c2)))
-	{
-		// tokenizer_handle_text
-	}
 }
 
 al_machine_code assemble(const char* source)
