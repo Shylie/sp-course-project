@@ -32,7 +32,7 @@
   | 1 | 11 | 36 |
   |:-:|:--:|:--:|
   | s | exponent | fraction |
-  
+
   - The fraction is interpreted as a value between 0 and 1; that is, the assumed
   binary point is immediately before the high-order bit. For normalized
   floating-point numbers, the high-order bit of the fraction must be 1. The
@@ -93,7 +93,7 @@ This can be done by setting *x* bit to 1.
 
 
 Bits *n* and *i* are used to specify how the target address is used in
-**Formats 3 and 4**. 
+**Formats 3 and 4**.
 
 If bit *n* = 0, and bit *i* = 1, the target address itself is used as the operand
 value; no memory reference is performed. This is called *Immediate* addressing.
@@ -107,7 +107,7 @@ location of the operand; this is reffered as *Simple* addressing. An example
 of this addressing mode can be seen in the first table of this section, which
 demonstrates the effects of *b* and *b* flags on Target address calculation.
 
-**IMPORTANT** 
+**IMPORTANT**
 SIC/XE instruction that specify *Simple* addressing mode are assembled with
 bits *n* and *i* both set to 1. Asseblers for the standard version of SIC will
 set both bits to 0. (This is because the 8-bit binary codes for all of the SIC
@@ -183,6 +183,14 @@ provide instructions to the assembler itself.
 | WORD  | Generate one-word integer constant. |
 | RESB  | Reserve the indicated number of bytes for a data area. |
 | RESW  | Reserve the indicated number of words for a data area. |
+
+### Platform-independant Directives
+
+| Directive | Description |
+|-----------|-------------|
+| EQU   | Defines the given symbol (o.e., enters it into SYMTAB) and assigns to it the value specified (p. 71). |
+| ORG   | Indirectly assign values to symbols (via LOCCTR). |
+| LTORG | Create a literal pool (p. 69). |
 
 ### Records/Object Code
 
