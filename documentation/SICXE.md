@@ -183,6 +183,8 @@ provide instructions to the assembler itself.
 | WORD  | Generate one-word integer constant. |
 | RESB  | Reserve the indicated number of bytes for a data area. |
 | RESW  | Reserve the indicated number of words for a data area. |
+| BASE  | Inform the assembler that the base register will contain the *address* of the operand (p. 60). |
+| UNBASE| Inform the assembler that the contents of the base register can no longer be relied upon for addressing (p. 60). |
 
 ### Platform-independant Directives
 
