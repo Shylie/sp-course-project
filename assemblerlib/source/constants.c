@@ -1,6 +1,7 @@
 #include "assemblerlib.h"
 #include "assemblerlib-private.h"
 
+/*
 const opcode_table_entry OPCODE_TABLE[] =
 {
 	{ .name = "ADD",    .opcode = OP_ADD,   .size = 3 },
@@ -117,3 +118,4 @@ const keyword_table_entry KEYWORD_TABLE[] =
 };
 
 const int KEYWORD_TABLE_SIZE = sizeof(KEYWORD_TABLE) / sizeof(*KEYWORD_TABLE);
+*/

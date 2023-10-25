@@ -1,4 +1,4 @@
-cmake_minimum_required(VERSION 3.26)
+cmake_minimum_required(VERSION 3.18)
 
 project(assemblerlib C)
 
@@ -18,4 +18,9 @@ set_target_properties(assemblerlib
 target_include_directories(assemblerlib
 	PUBLIC
 		include
+)
+
+target_link_libraries(assemblerlib
+	PUBLIC
+		commonlib
 )
