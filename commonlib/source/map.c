@@ -83,7 +83,12 @@ static void compare_elem(void* elem, size_t elem_size, struct find_info* ud)
 	}
 }
 
-void* map_get(struct map* m, const char* key, size_t keylen)
+void* map_get(struct map* m, const char* key)
+{
+	return map_getn(m, key, strlen(key));
+}
+
+void* map_getn(struct map* m, const char* key, size_t keylen)
 {
 	struct find_info elem = { .key = key, .keylen = keylen, .elem = NULL };
 	array_foreach(&m->bins[hash(key, keylen)], compare_elem, &elem);
@@ -91,9 +96,14 @@ void* map_get(struct map* m, const char* key, size_t keylen)
 	return elem.elem;
 }
 
-void map_set(struct map* m, const char* key, size_t keylen, const void* elem)
+void map_set(struct map* m, const char* key, const void* elem)
 {
-	void* found = map_get(m, key, keylen);
+	map_setn(m, key, strlen(key), elem);
+}
+
+void map_setn(struct map* m, const char* key, size_t keylen, const void* elem)
+{
+	void* found = map_getn(m, key, keylen);
 
 	if (!found)
 	{

@@ -4,6 +4,10 @@
 #include <stdbool.h>
 #include <stdint.h>
 
+#include <commonlib.h>
+
+void al_fill_tables(void);
+
 enum
 {
 	// SIC instructions
@@ -71,5 +75,34 @@ enum
 	OP_TIO = 0xF8,
 	OP_TIXR = 0xB8
 };
+
+struct operation_table_entry
+{
+	unsigned int  opcode;
+	unsigned char format;
+	enum opty
+	{
+		OPTY_SIC,
+		OPTY_XE,
+		OPTY_DIR,
+		OPTY_DIR_START,
+		OPTY_DIR_END,
+		OPTY_DIR_BYTE,
+		OPTY_DIR_WORD,
+		OPTY_DIR_RESB,
+		OPTY_DIR_RESW,
+		OPTY_DIR_BASE,
+		OPTY_DIR_UNBASE
+	} type;
+};
+
+struct symbol_table_entry
+{
+	int          value;
+	unsigned int line_number;
+};
+
+extern struct map OPERATION_TABLE;
+extern struct map SYMBOL_TABLE;
 
 #endif//ASSEMBLERLIB_PRIVATE_H

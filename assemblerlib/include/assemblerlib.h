@@ -1,6 +1,11 @@
 #ifndef ASSEMBLERLIB_H
 #define ASSEMBLERLIB_H
 
+// Initialize assemblerlib.
+void al_init(void);
+// Free all allocations made by assemblerlib.
+void al_deinit(void);
+
 /*-------------------------------
   Number systems conversion API
 -------------------------------*/

@@ -1,121 +1,123 @@
 #include "assemblerlib.h"
 #include "assemblerlib-private.h"
 
-/*
-const opcode_table_entry OPCODE_TABLE[] =
+static void fill_op_entry(const char* key, unsigned int opcode, unsigned char format, enum opty opty)
 {
-	{ .name = "ADD",    .opcode = OP_ADD,   .size = 3 },
-	{ .name = "+ADD",   .opcode = OP_ADD,   .size = 4 },
-	{ .name = "AND",    .opcode = OP_AND,   .size = 3 },
-	{ .name = "+AND",   .opcode = OP_AND,   .size = 4 },
-	{ .name = "COMP",   .opcode = OP_COMP,  .size = 3 },
-	{ .name = "+COMP",  .opcode = OP_COMP,  .size = 4 },
-	{ .name = "J",      .opcode = OP_J,     .size = 3 },
-	{ .name = "+J",     .opcode = OP_J,     .size = 4 },
-	{ .name = "JEQ",    .opcode = OP_JEQ,   .size = 3 },
-	{ .name = "+JEQ",   .opcode = OP_JEQ,   .size = 4 },
-	{ .name = "JGT",    .opcode = OP_JGT,   .size = 3 },
-	{ .name = "+JGT",   .opcode = OP_JGT,   .size = 4 },
-	{ .name = "JLT",    .opcode = OP_JLT,   .size = 3 },
-	{ .name = "+JLT",   .opcode = OP_JLT,   .size = 4 },
-	{ .name = "JSUB",   .opcode = OP_JSUB,  .size = 3 },
-	{ .name = "+JSUB",  .opcode = OP_JSUB,  .size = 4 },
-	{ .name = "LDA",    .opcode = OP_LDA,   .size = 3 },
-	{ .name = "+LDA",   .opcode = OP_LDA,   .size = 4 },
-	{ .name = "LDCH",   .opcode = OP_LDCH,  .size = 3 },
-	{ .name = "+LDCH",  .opcode = OP_LDCH,  .size = 4 },
-	{ .name = "LDL",    .opcode = OP_LDL,   .size = 3 },
-	{ .name = "+LDL",   .opcode = OP_LDL,   .size = 4 },
-	{ .name = "LDX",    .opcode = OP_LDX,   .size = 3 },
-	{ .name = "+LDX",   .opcode = OP_LDX,   .size = 4 },
-	{ .name = "MUL",    .opcode = OP_MUL,   .size = 3 },
-	{ .name = "+MUL",   .opcode = OP_MUL,   .size = 4 },
-	{ .name = "OR",     .opcode = OP_OR,    .size = 3 },
-	{ .name = "+OR",    .opcode = OP_OR,    .size = 4 },
-	{ .name = "RD",     .opcode = OP_RD,    .size = 3 },
-	{ .name = "+RD",    .opcode = OP_RD,    .size = 4 },
-	{ .name = "RSUB",   .opcode = OP_RSUB,  .size = 3 },
-	{ .name = "+RSUB",  .opcode = OP_RSUB,  .size = 4 },
-	{ .name = "STA",    .opcode = OP_STA,   .size = 3 },
-	{ .name = "+STA",   .opcode = OP_STA,   .size = 4 },
-	{ .name = "STCH",   .opcode = OP_STCH,  .size = 3 },
-	{ .name = "+STCH",  .opcode = OP_STCH,  .size = 4 },
-	{ .name = "STL",    .opcode = OP_STL,   .size = 3 },
-	{ .name = "+STL",   .opcode = OP_STL,   .size = 4 },
-	{ .name = "STSW",   .opcode = OP_STSW,  .size = 3 },
-	{ .name = "+STSW",  .opcode = OP_STSW,  .size = 4 },
-	{ .name = "STX",    .opcode = OP_STX,   .size = 3 },
-	{ .name = "+STX",   .opcode = OP_STX,   .size = 4 },
-	{ .name = "SUB",    .opcode = OP_SUB,   .size = 3 },
-	{ .name = "+SUB",   .opcode = OP_SUB,   .size = 4 },
-	{ .name = "TD",     .opcode = OP_TD,    .size = 3 },
-	{ .name = "+TD",    .opcode = OP_TD,    .size = 4 },
-	{ .name = "TIX",    .opcode = OP_TIX,   .size = 3 },
-	{ .name = "+TIX",   .opcode = OP_TIX,   .size = 4 },
-	{ .name = "WD",     .opcode = OP_WD,    .size = 3 },
-	{ .name = "+WD",    .opcode = OP_WD,    .size = 4 },
-	{ .name = "ADDF",   .opcode = OP_ADDF,  .size = 3 },
-	{ .name = "+ADDF",  .opcode = OP_ADDF,  .size = 4 },
-	{ .name = "ADDR",   .opcode = OP_ADDR,  .size = 2 },
-	{ .name = "CLEAR",  .opcode = OP_CLEAR, .size = 2 },
-	{ .name = "COMPF",  .opcode = OP_COMPF, .size = 3 },
-	{ .name = "+COMPF", .opcode = OP_COMPF, .size = 4 },
-	{ .name = "COMPR",  .opcode = OP_COMPR, .size = 2 },
-	{ .name = "DIVF",   .opcode = OP_DIVF,  .size = 3 },
-	{ .name = "+DIVF",  .opcode = OP_DIVF,  .size = 4 },
-	{ .name = "DIVR",   .opcode = OP_DIVR,  .size = 2 },
-	{ .name = "FIX",    .opcode = OP_FIX,   .size = 1 },
-	{ .name = "FLOAT",  .opcode = OP_FLOAT, .size = 1 },
-	{ .name = "HIO",    .opcode = OP_HIO,   .size = 1 },
-	{ .name = "LDB",    .opcode = OP_LDB,   .size = 3 },
-	{ .name = "+LDB",   .opcode = OP_LDB,   .size = 4 },
-	{ .name = "LDF",    .opcode = OP_LDF,   .size = 3 },
-	{ .name = "+LDF",   .opcode = OP_LDF,   .size = 4 },
-	{ .name = "LDS",    .opcode = OP_LDS,   .size = 3 },
-	{ .name = "+LDS",   .opcode = OP_LDS,   .size = 4 },
-	{ .name = "LDT",    .opcode = OP_LDT,   .size = 3 },
-	{ .name = "+LDT",   .opcode = OP_LDT,   .size = 4 },
-	{ .name = "LPS",    .opcode = OP_LPS,   .size = 3 },
-	{ .name = "+LPS",   .opcode = OP_LPS,   .size = 4 },
-	{ .name = "MULF",   .opcode = OP_MULF,  .size = 3 },
-	{ .name = "+MULF",  .opcode = OP_MULF,  .size = 4 },
-	{ .name = "MULR",   .opcode = OP_MULR,  .size = 2 },
-	{ .name = "NORM",   .opcode = OP_NORM,  .size = 1 },
-	{ .name = "RMO",    .opcode = OP_RMO,   .size = 2 },
-	{ .name = "SHIFTL", .opcode = OP_SHIFTL,.size = 2 },
-	{ .name = "SHIFTR", .opcode = OP_SHIFTR,.size = 2 },
-	{ .name = "SIO",    .opcode = OP_SIO,   .size = 1 },
-	{ .name = "SSK",    .opcode = OP_SSK,   .size = 3 },
-	{ .name = "+SSK",   .opcode = OP_SSK,   .size = 4 },
-	{ .name = "STB",    .opcode = OP_STB,   .size = 3 },
-	{ .name = "+STB",   .opcode = OP_STB,   .size = 4 },
-	{ .name = "STF",    .opcode = OP_STF,   .size = 3 },
-	{ .name = "+STF",   .opcode = OP_STF,   .size = 4 },
-	{ .name = "STI",    .opcode = OP_STI,   .size = 3 },
-	{ .name = "+STI",   .opcode = OP_STI,   .size = 4 },
-	{ .name = "STS",    .opcode = OP_STS,   .size = 3 },
-	{ .name = "+STS",   .opcode = OP_STS,   .size = 4 },
-	{ .name = "STT",    .opcode = OP_STT,   .size = 3 },
-	{ .name = "+STT",   .opcode = OP_STT,   .size = 4 },
-	{ .name = "SUBF",   .opcode = OP_SUBF,  .size = 3 },
-	{ .name = "+SUBF",  .opcode = OP_SUBF,  .size = 4 },
-	{ .name = "SUBR",   .opcode = OP_SUBR,  .size = 2 },
-	{ .name = "SVC",    .opcode = OP_SVC,   .size = 2 },
-	{ .name = "TIO",    .opcode = OP_TIO,   .size = 1 },
-	{ .name = "TIXR",   .opcode = OP_TIXR,  .size = 2 }
-};
+	struct operation_table_entry entry = { .opcode = opcode, .format = format, .type = opty };
+	map_set(&OPERATION_TABLE, key, &entry);
+}
 
-const int OPCODE_TABLE_SIZE = sizeof(OPCODE_TABLE) / sizeof(*OPCODE_TABLE);
-
-const keyword_table_entry KEYWORD_TABLE[] =
+void al_fill_tables(void)
 {
-	{ .name = "START" },
-	{ .name = "END"   },
-	{ .name = "BYTE"  },
-	{ .name = "WORD"  },
-	{ .name = "RESB"  },
-	{ .name = "RESW"  }
-};
+	fill_op_entry("ADD", OP_ADD, 3, OPTY_SIC);
+	fill_op_entry("+ADD", OP_ADD, 4, OPTY_XE);
+	fill_op_entry("AND", OP_AND, 3, OPTY_SIC);
+	fill_op_entry("+AND", OP_AND, 4, OPTY_XE);
+	fill_op_entry("COMP", OP_COMP, 3, OPTY_SIC);
+	fill_op_entry("+COMP", OP_COMP, 4, OPTY_XE);
+	fill_op_entry("J", OP_J, 3, OPTY_SIC);
+	fill_op_entry("+J", OP_J, 4, OPTY_XE);
+	fill_op_entry("JEQ", OP_JEQ, 3, OPTY_SIC);
+	fill_op_entry("+JEQ", OP_JEQ, 4, OPTY_XE);
+	fill_op_entry("JGT", OP_JGT, 3, OPTY_SIC);
+	fill_op_entry("+JGT", OP_JGT, 4, OPTY_XE);
+	fill_op_entry("JLT", OP_JLT, 3, OPTY_SIC);
+	fill_op_entry("+JLT", OP_JLT, 4, OPTY_XE);
+	fill_op_entry("JSUB", OP_JSUB, 3, OPTY_SIC);
+	fill_op_entry("+JSUB", OP_JSUB, 4, OPTY_XE);
+	fill_op_entry("LDA", OP_LDA, 3, OPTY_SIC);
+	fill_op_entry("+LDA", OP_LDA, 4, OPTY_XE);
+	fill_op_entry("LDCH", OP_LDCH, 3, OPTY_SIC);
+	fill_op_entry("+LDCH", OP_LDCH, 4, OPTY_XE);
+	fill_op_entry("LDL", OP_LDL, 3, OPTY_SIC);
+	fill_op_entry("+LDL", OP_LDL, 4, OPTY_XE);
+	fill_op_entry("LDX", OP_LDX, 3, OPTY_SIC);
+	fill_op_entry("+LDX", OP_LDX, 4, OPTY_XE);
+	fill_op_entry("MUL", OP_MUL, 3, OPTY_SIC);
+	fill_op_entry("+MUL", OP_MUL, 4, OPTY_XE);
+	fill_op_entry("OR", OP_OR, 3, OPTY_SIC);
+	fill_op_entry("+OR", OP_OR, 4, OPTY_XE);
+	fill_op_entry("RD", OP_RD, 3, OPTY_SIC);
+	fill_op_entry("+RD", OP_RD, 4, OPTY_XE);
+	fill_op_entry("RSUB", OP_RSUB, 3, OPTY_SIC);
+	fill_op_entry("+RSUB", OP_RSUB, 4, OPTY_XE);
+	fill_op_entry("STA", OP_STA, 3, OPTY_SIC);
+	fill_op_entry("+STA", OP_STA, 4, OPTY_XE);
+	fill_op_entry("STCH", OP_STCH, 3, OPTY_SIC);
+	fill_op_entry("+STCH", OP_STCH, 4, OPTY_XE);
+	fill_op_entry("STL", OP_STL, 3, OPTY_SIC);
+	fill_op_entry("+STL", OP_STL, 4, OPTY_XE);
+	fill_op_entry("STSW", OP_STSW, 3, OPTY_SIC);
+	fill_op_entry("+STSW", OP_STSW, 4, OPTY_XE);
+	fill_op_entry("STX", OP_STX, 3, OPTY_SIC);
+	fill_op_entry("+STX", OP_STX, 4, OPTY_XE);
+	fill_op_entry("SUB", OP_SUB, 3, OPTY_SIC);
+	fill_op_entry("+SUB", OP_SUB, 4, OPTY_XE);
+	fill_op_entry("TD", OP_TD, 3, OPTY_SIC);
+	fill_op_entry("+TD", OP_TD, 4, OPTY_XE);
+	fill_op_entry("TIX", OP_TIX, 3, OPTY_SIC);
+	fill_op_entry("+TIX", OP_TIX, 4, OPTY_XE);
+	fill_op_entry("WD", OP_WD, 3, OPTY_SIC);
+	fill_op_entry("+WD", OP_WD, 4, OPTY_XE);
 
-const int KEYWORD_TABLE_SIZE = sizeof(KEYWORD_TABLE) / sizeof(*KEYWORD_TABLE);
-*/
+	fill_op_entry("ADDF", OP_ADDF, 3, OPTY_XE);
+	fill_op_entry("+ADDF", OP_ADDF, 4, OPTY_XE);
+	fill_op_entry("ADDR", OP_ADDR, 2, OPTY_XE);
+	fill_op_entry("CLEAR", OP_CLEAR, 2, OPTY_XE);
+	fill_op_entry("COMPF", OP_COMPF, 3, OPTY_XE);
+	fill_op_entry("+COMPF", OP_COMPF, 4, OPTY_XE);
+	fill_op_entry("DIVF", OP_DIVF, 3, OPTY_XE);
+	fill_op_entry("+DIVF", OP_DIVF, 4, OPTY_XE);
+	fill_op_entry("DIVR", OP_DIVR, 2, OPTY_XE);
+	fill_op_entry("FIX", OP_FIX, 1, OPTY_XE);
+	fill_op_entry("FLOAT", OP_FLOAT, 1, OPTY_XE);
+	fill_op_entry("HIO", OP_HIO, 1, OPTY_XE);
+	fill_op_entry("LDB", OP_LDB, 3, OPTY_XE);
+	fill_op_entry("+LDB", OP_LDB, 4, OPTY_XE);
+	fill_op_entry("LDF", OP_LDF, 3, OPTY_XE);
+	fill_op_entry("+LDF", OP_LDF, 4, OPTY_XE);
+	fill_op_entry("LDS", OP_LDS, 3, OPTY_XE);
+	fill_op_entry("+LDS", OP_LDS, 4, OPTY_XE);
+	fill_op_entry("LDT", OP_LDT, 3, OPTY_XE);
+	fill_op_entry("+LDT", OP_LDT, 4, OPTY_XE);
+	fill_op_entry("LPS", OP_LPS, 3, OPTY_XE);
+	fill_op_entry("+LPS", OP_LPS, 4, OPTY_XE);
+	fill_op_entry("MULF", OP_MULF, 3, OPTY_XE);
+	fill_op_entry("+MULF", OP_MULF, 4, OPTY_XE);
+	fill_op_entry("MULR", OP_MULR, 2, OPTY_XE);
+	fill_op_entry("NORM", OP_NORM, 1, OPTY_XE);
+	fill_op_entry("RMO", OP_RMO, 2, OPTY_XE);
+	fill_op_entry("SHIFTL", OP_SHIFTL, 2, OPTY_XE);
+	fill_op_entry("SHIFTR", OP_SHIFTR, 2, OPTY_XE);
+	fill_op_entry("SIO", OP_SIO, 1, OPTY_XE);
+	fill_op_entry("SSK", OP_SSK, 3, OPTY_XE);
+	fill_op_entry("+SSK", OP_SSK, 4, OPTY_XE);
+	fill_op_entry("STB", OP_STB, 3, OPTY_XE);
+	fill_op_entry("+STB", OP_STB, 4, OPTY_XE);
+	fill_op_entry("STF", OP_STF, 3, OPTY_XE);
+	fill_op_entry("+STF", OP_STF, 4, OPTY_XE);
+	fill_op_entry("STI", OP_STI, 3, OPTY_XE);
+	fill_op_entry("+STI", OP_STI, 4, OPTY_XE);
+	fill_op_entry("STS", OP_STS, 3, OPTY_XE);
+	fill_op_entry("+STS", OP_STS, 4, OPTY_XE);
+	fill_op_entry("STT", OP_STT, 3, OPTY_XE);
+	fill_op_entry("+STT", OP_STT, 4, OPTY_XE);
+	fill_op_entry("SUBF", OP_SUBF, 3, OPTY_XE);
+	fill_op_entry("+SUBF", OP_SUBF, 4, OPTY_XE);
+	fill_op_entry("SUBR", OP_SUBR, 2, OPTY_XE);
+	fill_op_entry("SVC", OP_SVC, 2, OPTY_XE);
+	fill_op_entry("TIO", OP_TIO, 1, OPTY_XE);
+	fill_op_entry("TIXR", OP_TIXR, 2, OPTY_XE);
+
+	fill_op_entry("START", 0, 0, OPTY_DIR_START);
+	fill_op_entry("END", 0, 0, OPTY_DIR_END);
+	fill_op_entry("BYTE", 0, 3, OPTY_DIR_BYTE);
+	fill_op_entry("WORD", 0, 3, OPTY_DIR_WORD);
+	fill_op_entry("RESB", 1, 0, OPTY_DIR_RESB);
+	fill_op_entry("RESW", 1, 0, OPTY_DIR_RESW);
+	fill_op_entry("BASE", 0, 0, OPTY_DIR_BASE);
+	fill_op_entry("UNBASE", 0, 0, OPTY_DIR_UNBASE);
+}
+
+struct map OPERATION_TABLE;
+struct map SYMBOL_TABLE;

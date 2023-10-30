@@ -36,7 +36,9 @@ struct map
 
 struct map map_new(size_t element_size);
 void map_del(struct map* m);
-void *map_get(struct map* m, const char* key, size_t keylen);
-void map_set(struct map* m, const char* key, size_t keylen, const void* elem);
+void* map_get(struct map* m, const char* key);
+void *map_getn(struct map* m, const char* key, size_t keylen);
+void map_set(struct map* m, const char* key, const void* elem);
+void map_setn(struct map* m, const char* key, size_t keylen, const void* elem);
 
 #endif//COMMONLIB_H
