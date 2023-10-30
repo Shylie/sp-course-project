@@ -88,7 +88,7 @@ int main(int argc, char** argv)
 	printf("array test done\n");
 
 	struct map m = map_new(sizeof(int));
-	found = map_get(&m, "gamer", strlen("gamer"));
+	found = map_get(&m, "gamer");
 	
 	if (found)
 	{
@@ -100,10 +100,10 @@ int main(int argc, char** argv)
 	}
 
 	v = 69420;
-	map_set(&m, "gamer", strlen("gamer"), &v);
+	map_set(&m, "gamer", &v);
 	printf("set\n");
 
-	found = map_get(&m, "gamer", strlen("gamer"));
+	found = map_get(&m, "gamer");
 	if (found)
 	{
 		printf("found: %d\n", *found);
@@ -116,7 +116,7 @@ int main(int argc, char** argv)
 	float v2 = 3.4f;
 	struct map m2 = map_new(sizeof(float));
 
-	float* found2 = map_get(&m2, "gamer", strlen("gamer"));
+	float* found2 = map_get(&m2, "gamer");
 
 	if (found2)
 	{
@@ -127,8 +127,8 @@ int main(int argc, char** argv)
 		printf("not found\n");
 	}
 
-	map_set(&m2, "gamer", strlen("gamer"), &v2);
-	found2 = map_get(&m2, "gamer", strlen("gamer"));
+	map_set(&m2, "gamer", &v2);
+	found2 = map_get(&m2, "gamer");
 
 	if (found2)
 	{
@@ -141,7 +141,7 @@ int main(int argc, char** argv)
 
 	struct map m3 = map_new(sizeof(struct data));
 
-	struct data* found3 = map_get(&m3, "gamer", strlen("gamer"));
+	struct data* found3 = map_get(&m3, "gamer");
 
 	if (found3)
 	{
@@ -153,9 +153,9 @@ int main(int argc, char** argv)
 	}
 
 	struct data d = { .a = 69, .b = 4.20f };
-	map_set(&m3, "gamer", strlen("gamer"), &d);
+	map_set(&m3, "gamer", &d);
 
-	found3 = map_get(&m3, "gamer", strlen("gamer"));
+	found3 = map_get(&m3, "gamer");
 
 	if (found3)
 	{
