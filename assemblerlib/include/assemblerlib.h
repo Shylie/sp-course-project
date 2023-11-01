@@ -1,10 +1,7 @@
 #ifndef ASSEMBLERLIB_H
 #define ASSEMBLERLIB_H
 
-// Initialize assemblerlib.
-void al_init(void);
-// Free all allocations made by assemblerlib.
-void al_deinit(void);
+struct array assemble(const char** sources, bool xe);
 
 /*-------------------------------
   Number systems conversion API

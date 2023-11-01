@@ -1,12 +1,7 @@
 #ifndef ASSEMBLERLIB_PRIVATE_H
 #define ASSEMBLERLIB_PRIVATE_H
 
-#include <stdbool.h>
-#include <stdint.h>
-
 #include <commonlib.h>
-
-void al_fill_tables(void);
 
 enum
 {
@@ -102,7 +97,31 @@ struct symbol_table_entry
 	unsigned int line_number;
 };
 
-extern struct map OPERATION_TABLE;
-extern struct map SYMBOL_TABLE;
+struct line_info
+{
+	unsigned int line_number;
+	const char* label;
+	struct operation_table_entry op;
+	const char* operand;
+};
+
+struct assembler_state
+{
+	struct map operation_table;
+	struct map symbol_table;
+	struct array line_infos;
+	unsigned int location_counter;
+	// Make sure to add 1 when printing.
+	unsigned int current_line;
+};
+
+struct assembler_state assembler_state_new(void);
+void assembler_state_del(struct assembler_state* state);
+
+void parse_file(struct assembler_state* state, const char* source);
+void parse_line(struct assembler_state* state, const char* line);
+void parse_label(struct assembler_state* state, const char* label);
+void parse_operation(struct assembler_state* state, const char* operation);
+void parse_operand(struct assembler_state* state, const char* operand);
 
 #endif//ASSEMBLERLIB_PRIVATE_H

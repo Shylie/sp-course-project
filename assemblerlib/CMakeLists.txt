@@ -8,7 +8,8 @@ add_library(assemblerlib STATIC
 	source/assemblerlib-private.h
 	source/assemblerlib.c
 	source/constants.c
-  source/number_systems_conversions.c
+	source/number_systems_conversions.c
+	source/parser.c
 )
 
 set_target_properties(assemblerlib
