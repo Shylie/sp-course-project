@@ -111,10 +111,10 @@ void al_fill_tables(void)
 
 	fill_op_entry("START", 0, 0, OPTY_DIR_START);
 	fill_op_entry("END", 0, 0, OPTY_DIR_END);
-	fill_op_entry("BYTE", 0, 3, OPTY_DIR_BYTE);
-	fill_op_entry("WORD", 0, 3, OPTY_DIR_WORD);
-	fill_op_entry("RESB", 1, 0, OPTY_DIR_RESB);
-	fill_op_entry("RESW", 1, 0, OPTY_DIR_RESW);
+	fill_op_entry("BYTE", 0, 0, OPTY_DIR_BYTE);
+	fill_op_entry("WORD", 0, 0, OPTY_DIR_WORD);
+	fill_op_entry("RESB", 0, 0, OPTY_DIR_RESB);
+	fill_op_entry("RESW", 0, 0, OPTY_DIR_RESW);
 	fill_op_entry("BASE", 0, 0, OPTY_DIR_BASE);
 	fill_op_entry("UNBASE", 0, 0, OPTY_DIR_UNBASE);
 }
