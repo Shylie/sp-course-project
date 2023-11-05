@@ -5,7 +5,6 @@
 #include <stdlib.h>
 #include <string.h>
 
-static struct map bin_hex_representations;
 
 char *strrev(char *str)
 {
@@ -70,32 +69,25 @@ char *binary_to_hexadecimal(const char *binary)
   unsigned int binary_pad = (4 - (binary_size % 4)) % 4;
   char *padded_binary = (char *)malloc(129);
   memset(padded_binary, '0', binary_pad);
+  strcpy(padded_binary + binary_pad, binary);
 
-  /* 
-  Check whether map has not been initialized.
-     
-  if not, then DO IT.
-  */
-  if (!map_get(&bin_hex_representations, "0", 1)) {
-    bin_hex_representations = map_new(4 * sizeof(char));
-
-    map_set(&bin_hex_representations, "0", 1, "0000");
-    map_set(&bin_hex_representations, "1", 1, "0001");
-    map_set(&bin_hex_representations, "2", 1, "0010");
-    map_set(&bin_hex_representations, "3", 1, "0011");
-    map_set(&bin_hex_representations, "4", 1, "0100");
-    map_set(&bin_hex_representations, "5", 1, "0101");
-    map_set(&bin_hex_representations, "6", 1, "0110");
-    map_set(&bin_hex_representations, "7", 1, "0111");
-    map_set(&bin_hex_representations, "8", 1, "1000");
-    map_set(&bin_hex_representations, "9", 1, "1001");
-    map_set(&bin_hex_representations, "10", 2, "1010");
-    map_set(&bin_hex_representations, "11", 2, "1011");
-    map_set(&bin_hex_representations, "12", 2, "1100");
-    map_set(&bin_hex_representations, "13", 2, "1101");
-    map_set(&bin_hex_representations, "14", 2, "1110");
-    map_set(&bin_hex_representations, "15", 2, "1111");
-  }
+  struct array bin_hex_representations = array_new(sizeof(char *), 0);
+  array_append(&bin_hex_representations, "0000");
+  array_append(&bin_hex_representations, "0001");
+  array_append(&bin_hex_representations, "0010");
+  array_append(&bin_hex_representations, "0011");
+  array_append(&bin_hex_representations, "0100");
+  array_append(&bin_hex_representations, "0101");
+  array_append(&bin_hex_representations, "0110");
+  array_append(&bin_hex_representations, "0111");
+  array_append(&bin_hex_representations, "1000");
+  array_append(&bin_hex_representations, "1001");
+  array_append(&bin_hex_representations, "1010");
+  array_append(&bin_hex_representations, "1011");
+  array_append(&bin_hex_representations, "1100");
+  array_append(&bin_hex_representations, "1101");
+  array_append(&bin_hex_representations, "1110");
+  array_append(&bin_hex_representations, "1111");
 
   /* There's def some place for few optimizations. */
   unsigned int i;
@@ -105,28 +97,26 @@ char *binary_to_hexadecimal(const char *binary)
     group[4] = '\0';
 
     unsigned int j;
-    char *j_str = (char *)malloc(2);
-    for (j = 0; j != 16; j++) {
-      sprintf(j_str, "%u.%u", j / 10, j % 10);
-
-      if (strcmp(group, map_get(&bin_hex_representations, j_str, j / 15 + 1)) == 0) {
+    for (j = 0; j < 16; j++)
+      if (strcmp(group, (char *)array_at(&bin_hex_representations, j)) == 0) {
         char *hexadecimal_digit = (char *)malloc(2);
-        sprintf(hexadecimal, hexadecimal_digit);
+        sprintf(hexadecimal_digit, "%X", j);
+        strcat(hexadecimal, hexadecimal_digit);
         break;
-      }
-    }
+      } 
   }
 
-  map_del(&bin_hex_representations);
+  array_del(&bin_hex_representations);
 
-  return hexadecimal;
+  return strdup(hexadecimal);
 }
 
 char *decimal_to_hexadecimal(const int *decimal)
 {
-  char *hexadecimal;
+  /* Decimal -> Binary -> Hexadecimal */
+  char *binary = decimal_to_binary(decimal);
 
-  return hexadecimal;
+  return binary_to_hexadecimal(binary);
 }
 
 int binary_to_decimal(const char *binary)
@@ -143,7 +133,7 @@ int binary_to_decimal(const char *binary)
 
 int hexadecimal_to_decimal(const char *hexadecimal)
 {
-  int decimal = 0;
+  char *binary = hexadecimal_to_binary(hexadecimal);
 
-  return decimal;
+  return binary_to_decimal(binary);
 }
