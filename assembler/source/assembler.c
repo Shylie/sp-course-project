@@ -178,12 +178,12 @@ int main(int argc, char** argv)
 
 	while (1) {
 		printf("\nMenu:\n");
-		printf("1. Hexadecimal to Binary (Works.)\n");
-		printf("2. Decimal to Binary (Works.)\n\n");
-		printf("3. Binary to Hexadecimal (Needs to be fixed.)\n");
-		printf("4. Decimal to Hexadecimal (Not complete.)\n\n");
-		printf("5. Binary to Decimal (Works.)\n");
-		printf("6. Hexadecimal to Decimal (Not complete.)\n\n");
+		printf("1. Hexadecimal to Binary\n");
+		printf("2. Decimal to Binary\n");
+		printf("3. Binary to Hexadecimal\n");
+		printf("4. Decimal to Hexadecimal\n");
+		printf("5. Binary to Decimal\n");
+		printf("6. Hexadecimal to Decimal\n\n");
 		printf("7. Exit\n\n");
 		printf("Enter your choice: ");
 
