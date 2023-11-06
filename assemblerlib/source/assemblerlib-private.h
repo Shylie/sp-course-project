@@ -102,7 +102,8 @@ struct line_info
 	unsigned int line_number;
 	const char* label;
 	struct operation_table_entry op;
-	const char* operand;
+	unsigned int operand;
+  bool flag[6];
 };
 
 struct assembler_state
