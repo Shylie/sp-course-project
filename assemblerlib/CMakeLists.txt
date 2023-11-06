@@ -10,6 +10,7 @@ add_library(assemblerlib STATIC
 	source/constants.c
 	source/number_systems_conversions.c
 	source/parser.c
+  source/target-addr-calculations.c
 )
 
 set_target_properties(assemblerlib
