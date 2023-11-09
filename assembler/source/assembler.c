@@ -228,7 +228,7 @@ int main(int argc, char** argv)
 			printf("%d\n", result6);
 			break;
 		default:
-
+			break;
 		}
 	}
 

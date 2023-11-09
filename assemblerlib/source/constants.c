@@ -134,4 +134,5 @@ void assembler_state_del(struct assembler_state* state)
 {
 	map_del(&state->operation_table);
 	map_del(&state->symbol_table);
+	array_del(&state->line_infos);
 }

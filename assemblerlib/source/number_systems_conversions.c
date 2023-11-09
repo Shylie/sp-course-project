@@ -6,7 +6,7 @@
 #include <string.h>
 
 
-char *strrev(char *str)
+char *reverse(char *str)
 {
   char *p1, *p2;
 
@@ -37,7 +37,7 @@ char *hexadecimal_to_binary(const char *hexadecimal)
 
   binary[i] = '\0';
 
-  strrev(binary);
+  reverse(binary);
 
   return binary;
 }
@@ -56,7 +56,7 @@ char *decimal_to_binary(const int *decimal)
   }
 
   binary[i] = '\0';
-  strrev(binary); 
+  reverse(binary);
 
   return binary;
 }
@@ -92,14 +92,14 @@ char *binary_to_hexadecimal(const char *binary)
   /* There's def some place for few optimizations. */
   unsigned int i;
   for (i = 0; i < binary_size + binary_pad; i += 4) {
-    char *group = (char *)malloc(5);
+    char *group = (char *)malloc(5); // use a stack-based array instead here
     strncpy(group, padded_binary + i, 4);
     group[4] = '\0';
 
     unsigned int j;
     for (j = 0; j < 16; j++)
       if (strcmp(group, (char *)array_at(&bin_hex_representations, j)) == 0) {
-        char *hexadecimal_digit = (char *)malloc(2);
+        char *hexadecimal_digit = (char *)malloc(2); // again, use a stack-based array
         sprintf(hexadecimal_digit, "%X", j);
         strcat(hexadecimal, hexadecimal_digit);
         break;

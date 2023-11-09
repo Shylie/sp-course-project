@@ -91,19 +91,35 @@ struct operation_table_entry
 	} type;
 };
 
+enum flags
+{
+	FLAG_N,
+	FLAG_I,
+	FLAG_X,
+	FLAG_B,
+	FLAG_P,
+	FLAG_E,
+	FLAG_COUNT
+};
+
+struct str
+{
+	const char* start;
+	size_t      length;
+};
+
 struct symbol_table_entry
 {
-	int          value;
 	unsigned int line_number;
+	int          value;
 };
 
 struct line_info
 {
-	unsigned int line_number;
-	const char* label;
-	struct operation_table_entry op;
-	unsigned int operand;
-  bool flag[6];
+	struct operation_table_entry operation;
+	struct str                   operand;
+	bool                         flags[FLAG_COUNT];
+	const char*                  error;
 };
 
 struct assembler_state
@@ -120,9 +136,27 @@ struct assembler_state assembler_state_new(void);
 void assembler_state_del(struct assembler_state* state);
 
 void parse_file(struct assembler_state* state, const char* source);
-void parse_line(struct assembler_state* state, const char* line);
-void parse_label(struct assembler_state* state, const char* label);
-void parse_operation(struct assembler_state* state, const char* operation);
-void parse_operand(struct assembler_state* state, const char* operand);
+void parse_line(struct assembler_state* state, struct str line, unsigned int linenum);
+void parse_label(struct assembler_state* state, struct str label, unsigned int linenum);
+void parse_operation(struct assembler_state* state, struct str operation, unsigned int linenum);
+void parse_operand(struct assembler_state* state, struct str operand, unsigned int linenum);
+
+/*-------------------------------
+  Number systems conversion API
+-------------------------------*/
+
+char* reverse(char* str);
+
+/* To binary conversions. */
+extern char* hexadecimal_to_binary(const char* hexadecimal);
+extern char* decimal_to_binary(const int* decimal);
+
+/* To hexadecimal coversions. */
+extern char* binary_to_hexadecimal(const char* binary);
+extern char* decimal_to_hexadecimal(const int* decimal);
+
+/* To decimal conversions. */
+extern int binary_to_decimal(const char* binary);
+extern int hexadecimal_to_decimal(const char* hexadecimal);
 
 #endif//ASSEMBLERLIB_PRIVATE_H
