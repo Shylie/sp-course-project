@@ -92,14 +92,14 @@ char *binary_to_hexadecimal(const char *binary)
   /* There's def some place for few optimizations. */
   unsigned int i;
   for (i = 0; i < binary_size + binary_pad; i += 4) {
-    char *group = (char *)malloc(5); // use a stack-based array instead here
+    char group[5];
     strncpy(group, padded_binary + i, 4);
     group[4] = '\0';
 
     unsigned int j;
     for (j = 0; j < 16; j++)
       if (strcmp(group, (char *)array_at(&bin_hex_representations, j)) == 0) {
-        char *hexadecimal_digit = (char *)malloc(2); // again, use a stack-based array
+        char hexadecimal_digit[2];
         sprintf(hexadecimal_digit, "%X", j);
         strcat(hexadecimal, hexadecimal_digit);
         break;
