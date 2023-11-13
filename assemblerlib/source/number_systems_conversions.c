@@ -71,7 +71,7 @@ char *binary_to_hexadecimal(const char *binary)
   memset(padded_binary, '0', binary_pad);
   strcpy(padded_binary + binary_pad, binary);
 
-  struct array bin_hex_representations = array_new(sizeof(char *), 0);
+  struct array bin_hex_representations = array_new(sizeof(char *), 16);
   array_append(&bin_hex_representations, "0000");
   array_append(&bin_hex_representations, "0001");
   array_append(&bin_hex_representations, "0010");
