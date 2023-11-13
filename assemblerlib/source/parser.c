@@ -1,17 +1,38 @@
 #include "assemblerlib-private.h"
 
-#include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 
-static size_t linelen(const char* s)
+static struct array split_file(struct str file)
 {
-	const size_t max = strlen(s);
-	for (size_t current = 0; current < max; current++)
-		if (s[current] == '\n')
-			return (size_t)(current);
+	struct array lines = array_new(sizeof(struct str), 0);
 
-	return max;
+	const char* linestart = file.start;
+	const char* comment = NULL;
+
+	for (const char* current = file.start; current < file.start + file.length; current++)
+	{
+		switch (*current)
+		{
+		case '\n':
+		{
+			struct str line = { .start = linestart, .length = comment ? (comment - linestart) : (current - linestart) };
+			array_append(&lines, &line);
+			linestart = current;
+			comment = NULL;
+			break;
+		}
+
+		case '.':
+			if (!comment)
+			{
+				comment = current;
+			}
+			break;
+		}
+	}
+
+	return lines;
 }
 
 static bool iswhitespace(const char c)
@@ -27,13 +48,13 @@ static bool iswhitespace(const char c)
 	}
 }
 
-static struct array split_line(const char* line, size_t linelen)
+static struct array split_line(struct str line)
 {
-	struct array lines = array_new(sizeof(struct str), 0);
+	struct array tokens = array_new(sizeof(struct str), 0);
 
 	const char* tokstart;
-	const char* current = line;
-	const char* const end = line + linelen;
+	const char* current = line.start;
+	const char* const end = line.start + line.length;
 
 	while (current < end) {
 		while (current < end && iswhitespace(*current))
@@ -46,14 +67,14 @@ static struct array split_line(const char* line, size_t linelen)
 
 		if (current < end) {
 			struct str s = { .start = tokstart, .length = (current - tokstart) };
-			array_append(&lines, &s);
+			array_append(&tokens, &s);
 		}
 	}
 
-	return lines;
+	return tokens;
 }
 
-void parse_file(struct assembler_state* state, const char* source)
+void parse_file(struct assembler_state* state, struct str source)
 {
 	/*
 		TO-DOs:
@@ -62,64 +83,49 @@ void parse_file(struct assembler_state* state, const char* source)
 		handle incrementing the current line, locctr, etc.
 	*/
 
-	FILE *input;
-	input = fopen(source, 'r');
+	struct array lines = split_file(source);
 
-	if (input == NULL) {
-		perror("Can't open the specified file.");
-		exit(1);
-	}
-	else {
-		char buffer[128];
+	for (unsigned int i = 0; i < array_size(&lines); i++)
+	{
+		parse_line(state, *(struct str*)array_at(&lines, i), i);
 
-		/* Begin reading the file line-by-line. */
-		while (fgets(buffer, sizeof(buffer), input)) {
-			/* Trim the comment from the line if one is present. */
-			char *comment_start_pointer = strchr(buffer, '.');
-			char *uncommented_line = NULL;
-
-			if (comment_start_pointer) {
-				unsigned int position = comment_start_pointer - buffer;
-
-				uncommented_line = malloc(position + 1);
-				memcpy(uncommented_line, buffer, position);
-				uncommented_line[position] = '\0';
-			}
-			else
-				uncommented_line = buffer;
-
-			/* Begin the actual parsing. */
-			/* ... */
-
+		struct line_info* info = array_at(&state->line_infos, i);
+		if (info->operation.type > OPTY_DIR)
+		{
+			// handle assembler directives
+		}
+		else
+		{
+			state->location_counter += info->operation.format;
 		}
 	}
 
-	fclose(input);
+	array_del(&lines);
 }
 
 void parse_line(struct assembler_state* state, struct str line, unsigned int linenum)
 {
-	struct array lines = split_line(line.start, line.length);
+	struct array tokens = split_line(line);
 
 	struct line_info info;
 	memset(&info, 0, sizeof(struct line_info));
 	array_append(&state->line_infos, &info);
 
-	const size_t sz = array_size(&lines);
+	const size_t sz = array_size(&tokens);
 
 	if (sz == 3) {
-		parse_label(state, *(struct str*)array_at(&lines, 0), linenum);
-		parse_operation(state, *(struct str*)array_at(&lines, 1), linenum);
-		parse_operand(state, *(struct str*)array_at(&lines, 2), linenum);
+		parse_label(state, *(struct str*)array_at(&tokens, 0), linenum);
+		parse_operation(state, *(struct str*)array_at(&tokens, 1), linenum);
+		parse_operand(state, *(struct str*)array_at(&tokens, 2), linenum);
 	}
 	else if (sz == 2) {
-		parse_operation(state, *(struct str*)array_at(&lines, 0), linenum);
-		parse_operand(state, *(struct str*)array_at(&lines, 1), linenum);
+		parse_operation(state, *(struct str*)array_at(&tokens, 0), linenum);
+		parse_operand(state, *(struct str*)array_at(&tokens, 1), linenum);
 	}
 	else
 		((struct line_info*)array_at(&state->line_infos, linenum))->error = "invalid syntax";
 
-	array_del(&lines);
+	array_del(&tokens);
 }
 
 void parse_label(struct assembler_state* state, struct str label, unsigned int linenum)

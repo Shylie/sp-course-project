@@ -135,7 +135,7 @@ struct assembler_state
 struct assembler_state assembler_state_new(void);
 void assembler_state_del(struct assembler_state* state);
 
-void parse_file(struct assembler_state* state, const char* source);
+void parse_file(struct assembler_state* state, struct str source);
 void parse_line(struct assembler_state* state, struct str line, unsigned int linenum);
 void parse_label(struct assembler_state* state, struct str label, unsigned int linenum);
 void parse_operation(struct assembler_state* state, struct str operation, unsigned int linenum);
