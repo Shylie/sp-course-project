@@ -10,9 +10,9 @@ static struct array split_file(struct str file)
 	const char* linestart = file.start;
 	const char* comment = NULL;
 
-	for (const char* current = file.start; current < file.start + file.length; current++)
+	for (const char* current = file.start; current < file.start + file.length;)
 	{
-		switch (*current)
+		switch (*current++)
 		{
 		case '\n':
 		{
@@ -76,13 +76,6 @@ static struct array split_line(struct str line)
 
 void parse_file(struct assembler_state* state, struct str source)
 {
-	/*
-		TO-DOs:
-
-		Trim comments (use '.' as delim).
-		handle incrementing the current line, locctr, etc.
-	*/
-
 	struct array lines = split_file(source);
 
 	for (unsigned int i = 0; i < array_size(&lines); i++)
@@ -90,9 +83,9 @@ void parse_file(struct assembler_state* state, struct str source)
 		parse_line(state, *(struct str*)array_at(&lines, i), i);
 
 		struct line_info* info = array_at(&state->line_infos, i);
-		if (info->operation.type > OPTY_DIR)
+		if (info->operation.type == OPTY_DIR)
 		{
-			// handle assembler directives
+			info->operation.directive(state, info);
 		}
 		else
 		{
@@ -174,7 +167,7 @@ void parse_operand(struct assembler_state* state, struct str operand, unsigned i
 			}
 	}
 
-	// calculate these later
+	// calculate these later during target address calculation
 	info->flags[FLAG_P] = false;
 	info->flags[FLAG_B] = false;
 

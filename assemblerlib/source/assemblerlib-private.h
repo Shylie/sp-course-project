@@ -71,6 +71,8 @@ enum
 	OP_TIXR = 0xB8
 };
 
+typedef void (*directive_func)(struct assembler_state*, struct line_info* info);
+
 struct operation_table_entry
 {
 	unsigned int  opcode;
@@ -79,16 +81,9 @@ struct operation_table_entry
 	{
 		OPTY_SIC,
 		OPTY_XE,
-		OPTY_DIR,
-		OPTY_DIR_START,
-		OPTY_DIR_END,
-		OPTY_DIR_BYTE,
-		OPTY_DIR_WORD,
-		OPTY_DIR_RESB,
-		OPTY_DIR_RESW,
-		OPTY_DIR_BASE,
-		OPTY_DIR_UNBASE
+		OPTY_DIR
 	} type;
+	directive_func directive;
 };
 
 enum flags
@@ -128,8 +123,10 @@ struct assembler_state
 	struct map symbol_table;
 	struct array line_infos;
 	unsigned int location_counter;
-	// Make sure to add 1 when printing.
-	unsigned int current_line;
+	char program_name[6];
+	unsigned int program_length;
+	unsigned int program_start;
+	unsigned int program_first_instruction;
 };
 
 struct assembler_state assembler_state_new(void);
@@ -140,6 +137,15 @@ void parse_line(struct assembler_state* state, struct str line, unsigned int lin
 void parse_label(struct assembler_state* state, struct str label, unsigned int linenum);
 void parse_operation(struct assembler_state* state, struct str operation, unsigned int linenum);
 void parse_operand(struct assembler_state* state, struct str operand, unsigned int linenum);
+
+extern const directive_func DIR_START;
+extern const directive_func DIR_END;
+extern const directive_func DIR_BYTE;
+extern const directive_func DIR_WORD;
+extern const directive_func DIR_RESB;
+extern const directive_func DIR_RESW;
+extern const directive_func DIR_BASE;
+extern const directive_func DIR_UNBASE;
 
 /*-------------------------------
   Number systems conversion API

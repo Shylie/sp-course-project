@@ -3,7 +3,12 @@
 
 static void fill_op_entry(struct assembler_state* state, const char* key, unsigned int opcode, unsigned char format, enum opty opty)
 {
-	struct operation_table_entry entry = { .opcode = opcode, .format = format, .type = opty };
+	fill_op_entry_full(state, key, opcode, format, opty, NULL);
+}
+
+static void fill_op_entry_full(struct assembler_state* state, const char* key, unsigned int opcode, unsigned char format, enum opty opty, directive_func func)
+{
+	struct operation_table_entry entry = { .opcode = opcode, .format = format, .type = opty, .directive = func };
 	map_set(&state->operation_table, key, &entry);
 }
 
@@ -14,8 +19,7 @@ struct assembler_state assembler_state_new(void)
 		.operation_table = map_new(sizeof(struct operation_table_entry)),
 		.symbol_table = map_new(sizeof(struct symbol_table_entry)),
 		.line_infos = array_new(sizeof(struct line_info), 16),
-		.location_counter = 0,
-		.current_line = 0
+		.location_counter = 0
 	};
 
 	fill_op_entry(&state, "ADD", OP_ADD, 3, OPTY_SIC);
@@ -75,6 +79,7 @@ struct assembler_state assembler_state_new(void)
 	fill_op_entry(&state, "CLEAR", OP_CLEAR, 2, OPTY_XE);
 	fill_op_entry(&state, "COMPF", OP_COMPF, 3, OPTY_XE);
 	fill_op_entry(&state, "+COMPF", OP_COMPF, 4, OPTY_XE);
+	fill_op_entry(&state, "COMPR", OP_COMPR, 2, OPTY_XE);
 	fill_op_entry(&state, "DIVF", OP_DIVF, 3, OPTY_XE);
 	fill_op_entry(&state, "+DIVF", OP_DIVF, 4, OPTY_XE);
 	fill_op_entry(&state, "DIVR", OP_DIVR, 2, OPTY_XE);
@@ -118,14 +123,14 @@ struct assembler_state assembler_state_new(void)
 	fill_op_entry(&state, "TIO", OP_TIO, 1, OPTY_XE);
 	fill_op_entry(&state, "TIXR", OP_TIXR, 2, OPTY_XE);
 
-	fill_op_entry(&state, "START", 0, 0, OPTY_DIR_START);
-	fill_op_entry(&state, "END", 0, 0, OPTY_DIR_END);
-	fill_op_entry(&state, "BYTE", 0, 0, OPTY_DIR_BYTE);
-	fill_op_entry(&state, "WORD", 0, 0, OPTY_DIR_WORD);
-	fill_op_entry(&state, "RESB", 0, 0, OPTY_DIR_RESB);
-	fill_op_entry(&state, "RESW", 0, 0, OPTY_DIR_RESW);
-	fill_op_entry(&state, "BASE", 0, 0, OPTY_DIR_BASE);
-	fill_op_entry(&state, "UNBASE", 0, 0, OPTY_DIR_UNBASE);
+	fill_op_entry_full(&state, "START", 0, 0, OPTY_DIR, DIR_START);
+	fill_op_entry_full(&state, "END", 0, 0, OPTY_DIR, DIR_END);
+	fill_op_entry_full(&state, "BYTE", 0, 0, OPTY_DIR, DIR_BYTE);
+	fill_op_entry_full(&state, "WORD", 0, 0, OPTY_DIR, DIR_WORD);
+	fill_op_entry_full(&state, "RESB", 0, 0, OPTY_DIR, DIR_RESB);
+	fill_op_entry_full(&state, "RESW", 0, 0, OPTY_DIR, DIR_RESW);
+	fill_op_entry_full(&state, "BASE", 0, 0, OPTY_DIR, DIR_BASE);
+	fill_op_entry_full(&state, "UNBASE", 0, 0, OPTY_DIR, DIR_UNBASE);
 
 	return state;
 }
