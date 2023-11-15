@@ -114,6 +114,7 @@ struct line_info
 	struct operation_table_entry operation;
 	struct str                   operand;
 	bool                         flags[FLAG_COUNT];
+	unsigned int                 location;
 	const char*                  error;
 };
 

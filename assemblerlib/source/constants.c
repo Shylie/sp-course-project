@@ -1,15 +1,15 @@
 #include "assemblerlib.h"
 #include "assemblerlib-private.h"
 
-static void fill_op_entry(struct assembler_state* state, const char* key, unsigned int opcode, unsigned char format, enum opty opty)
-{
-	fill_op_entry_full(state, key, opcode, format, opty, NULL);
-}
-
 static void fill_op_entry_full(struct assembler_state* state, const char* key, unsigned int opcode, unsigned char format, enum opty opty, directive_func func)
 {
 	struct operation_table_entry entry = { .opcode = opcode, .format = format, .type = opty, .directive = func };
 	map_set(&state->operation_table, key, &entry);
+}
+
+static void fill_op_entry(struct assembler_state* state, const char* key, unsigned int opcode, unsigned char format, enum opty opty)
+{
+	fill_op_entry_full(state, key, opcode, format, opty, NULL);
 }
 
 struct assembler_state assembler_state_new(void)

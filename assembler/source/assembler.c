@@ -16,7 +16,8 @@ struct data
 
 int main(int argc, char** argv)
 {
-	assemble((const char* []) { "basic.txt", NULL });
+	struct array arr = assemble((const char* []) { "basic.txt", NULL });
+	array_del(&arr);
 
 	/* Conversions test. */
 

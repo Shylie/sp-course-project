@@ -83,6 +83,9 @@ void parse_file(struct assembler_state* state, struct str source)
 		parse_line(state, *(struct str*)array_at(&lines, i), i);
 
 		struct line_info* info = array_at(&state->line_infos, i);
+
+		info->location = state->location_counter;
+
 		if (info->operation.type == OPTY_DIR)
 		{
 			info->operation.directive(state, info);
@@ -92,6 +95,8 @@ void parse_file(struct assembler_state* state, struct str source)
 			state->location_counter += info->operation.format;
 		}
 	}
+
+	state->program_length = state->location_counter;
 
 	array_del(&lines);
 }
