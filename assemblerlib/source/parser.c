@@ -155,7 +155,7 @@ void parse_operand(struct assembler_state* state, struct str operand, unsigned i
 			info->flags[FLAG_E] = true;
 			// fall through here
 		case 3:
-			if (operand.start[operand.length - 2] == ',' && operand.start[operand.length - 1] == 'X') {
+			if (operand.length > 2 && operand.start[operand.length - 2] == ',' && operand.start[operand.length - 1] == 'X') {
 				info->flags[FLAG_N] = true;
 				info->flags[FLAG_I] = true;
 				info->flags[FLAG_X] = true;
