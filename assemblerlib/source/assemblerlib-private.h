@@ -93,8 +93,7 @@ enum flags
 	FLAG_X,
 	FLAG_B,
 	FLAG_P,
-	FLAG_E,
-	FLAG_COUNT
+	FLAG_E
 };
 
 struct str
@@ -111,9 +110,14 @@ struct symbol_table_entry
 
 struct line_info
 {
+	struct str                   line;
 	struct operation_table_entry operation;
 	struct str                   operand;
-	bool                         flags[FLAG_COUNT];
+	union
+	{
+		bool                     flags[6];
+		unsigned char            flag;
+	};
 	unsigned int                 location;
 	const char*                  error;
 };
@@ -123,7 +127,8 @@ struct assembler_state
 	struct map operation_table;
 	struct map symbol_table;
 	struct array line_infos;
-	unsigned int location_counter;
+	struct str current_block;
+	struct map location_counters;
 	char program_name[6];
 	unsigned int program_length;
 	unsigned int program_start;
@@ -133,11 +138,14 @@ struct assembler_state
 struct assembler_state assembler_state_new(void);
 void assembler_state_del(struct assembler_state* state);
 
+unsigned int* assembler_state_location_counter(struct assembler_state* state);
+
 void parse_file(struct assembler_state* state, struct str source);
 void parse_line(struct assembler_state* state, struct str line, unsigned int linenum);
 void parse_label(struct assembler_state* state, struct str label, unsigned int linenum);
 void parse_operation(struct assembler_state* state, struct str operation, unsigned int linenum);
 void parse_operand(struct assembler_state* state, struct str operand, unsigned int linenum);
+unsigned int parse_operand_2(struct str operand);
 
 extern const directive_func DIR_START;
 extern const directive_func DIR_END;
@@ -147,6 +155,13 @@ extern const directive_func DIR_RESB;
 extern const directive_func DIR_RESW;
 extern const directive_func DIR_BASE;
 extern const directive_func DIR_UNBASE;
+extern const directive_func DIR_USE;
+extern const directive_func DIR_LTORG;
+extern const directive_func DIR_MACRO;
+extern const directive_func DIR_MEND;
+
+extern const char* const  DEFAULT_BLOCK_NAME;
+extern const unsigned int DEFAULT_BLOCK_LENGTH;
 
 /*-------------------------------
   Number systems conversion API
@@ -165,5 +180,6 @@ extern char* decimal_to_hexadecimal(const int* decimal);
 /* To decimal conversions. */
 extern int binary_to_decimal(const char* binary);
 extern int hexadecimal_to_decimal(const char* hexadecimal);
+extern int decimal_to_decimal(struct str decimal);
 
 #endif//ASSEMBLERLIB_PRIVATE_H

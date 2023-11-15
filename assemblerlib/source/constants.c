@@ -1,6 +1,8 @@
 #include "assemblerlib.h"
 #include "assemblerlib-private.h"
 
+#include <assert.h>
+
 static void fill_op_entry_full(struct assembler_state* state, const char* key, unsigned int opcode, unsigned char format, enum opty opty, directive_func func)
 {
 	struct operation_table_entry entry = { .opcode = opcode, .format = format, .type = opty, .directive = func };
@@ -19,8 +21,18 @@ struct assembler_state assembler_state_new(void)
 		.operation_table = map_new(sizeof(struct operation_table_entry)),
 		.symbol_table = map_new(sizeof(struct symbol_table_entry)),
 		.line_infos = array_new(sizeof(struct line_info), 16),
-		.location_counter = 0
+		.current_block = (struct str){ .start = DEFAULT_BLOCK_NAME, .length = DEFAULT_BLOCK_LENGTH },
+		.location_counters = map_new(sizeof(unsigned int)),
+		.program_name = (char[]){ ' ', ' ', ' ', ' ', ' ', ' ' },
+		.program_length = 0,
+		.program_start = 0,
+		.program_first_instruction = 0
 	};
+
+	{
+		const unsigned int value = 0;
+		map_setn(&state.location_counters, state.current_block.start, state.current_block.length, &value);
+	}
 
 	fill_op_entry(&state, "ADD", OP_ADD, 3, OPTY_SIC);
 	fill_op_entry(&state, "+ADD", OP_ADD, 4, OPTY_XE);
@@ -131,6 +143,10 @@ struct assembler_state assembler_state_new(void)
 	fill_op_entry_full(&state, "RESW", 0, 0, OPTY_DIR, DIR_RESW);
 	fill_op_entry_full(&state, "BASE", 0, 0, OPTY_DIR, DIR_BASE);
 	fill_op_entry_full(&state, "UNBASE", 0, 0, OPTY_DIR, DIR_UNBASE);
+	fill_op_entry_full(&state, "USE", 0, 0, OPTY_DIR, DIR_USE);
+	fill_op_entry_full(&state, "LTORG", 0, 0, OPTY_DIR, DIR_LTORG);
+	fill_op_entry_full(&state, "MACRO", 0, 0, OPTY_DIR, DIR_MACRO);
+	fill_op_entry_full(&state, "MEND", 0, 0, OPTY_DIR, DIR_MEND);
 
 	return state;
 }
@@ -140,4 +156,12 @@ void assembler_state_del(struct assembler_state* state)
 	map_del(&state->operation_table);
 	map_del(&state->symbol_table);
 	array_del(&state->line_infos);
+	map_del(&state->location_counters);
+}
+
+unsigned int* assembler_state_location_counter(struct assembler_state* state)
+{
+	unsigned int* ctr = map_getn(&state->location_counters, state->current_block.start, state->current_block.length);
+	assert(ctr); // badness if null
+	return ctr;
 }

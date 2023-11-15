@@ -1,4 +1,5 @@
 #include "assemblerlib.h"
+#include "assemblerlib-private.h"
 #include "commonlib.h"
 
 #include <stdio.h>
@@ -136,4 +137,20 @@ int hexadecimal_to_decimal(const char *hexadecimal)
   char *binary = hexadecimal_to_binary(hexadecimal);
 
   return binary_to_decimal(binary);
+}
+
+int decimal_to_decimal(struct str decimal)
+{
+    int value = 0;
+
+    for (const char* c = decimal.start; c < decimal.start + decimal.length; c++)
+    {
+        if (*c < '0' || *c > '9')
+        {
+            return 0;
+        }
+        value = value * 10 + (*c - '0');
+    }
+
+    return value;
 }

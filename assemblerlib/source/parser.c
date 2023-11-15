@@ -2,6 +2,7 @@
 
 #include <stdlib.h>
 #include <string.h>
+#include <stdio.h>
 
 static struct array split_file(struct str file)
 {
@@ -80,11 +81,13 @@ void parse_file(struct assembler_state* state, struct str source)
 
 	for (unsigned int i = 0; i < array_size(&lines); i++)
 	{
-		parse_line(state, *(struct str*)array_at(&lines, i), i);
+		struct str line = *(struct str*)array_at(&lines, i);
+		parse_line(state, line, i);
 
 		struct line_info* info = array_at(&state->line_infos, i);
 
-		info->location = state->location_counter;
+		info->location = *assembler_state_location_counter(state);
+		info->line = line;
 
 		if (info->operation.type == OPTY_DIR)
 		{
@@ -92,11 +95,13 @@ void parse_file(struct assembler_state* state, struct str source)
 		}
 		else
 		{
-			state->location_counter += info->operation.format;
+			*assembler_state_location_counter(state) += info->operation.format;
 		}
+
+		printf("%x\t%.*s\n", info->location, line.length, line.start);
 	}
 
-	state->program_length = state->location_counter;
+	state->program_length = 0; // do later
 
 	array_del(&lines);
 }
@@ -120,6 +125,9 @@ void parse_line(struct assembler_state* state, struct str line, unsigned int lin
 		parse_operation(state, *(struct str*)array_at(&tokens, 0), linenum);
 		parse_operand(state, *(struct str*)array_at(&tokens, 1), linenum);
 	}
+	else if (sz == 1) {
+		parse_operation(state, *(struct str*)array_at(&tokens, 0), linenum);
+	}
 	else
 		((struct line_info*)array_at(&state->line_infos, linenum))->error = "invalid syntax";
 
@@ -131,7 +139,7 @@ void parse_label(struct assembler_state* state, struct str label, unsigned int l
 	if (map_getn(&state->symbol_table, label.start, label.length))
 		((struct line_info*)array_at(&state->line_infos, linenum))->error = "multiple defitions for label";
 	else {
-		struct symbol_table_entry entry = { .line_number = linenum, .value = state->location_counter };
+		struct symbol_table_entry entry = { .line_number = linenum, .value = *assembler_state_location_counter(state) };
 		map_setn(&state->symbol_table, label.start, label.length, &entry);
 	}
 }
@@ -154,22 +162,42 @@ void parse_operand(struct assembler_state* state, struct str operand, unsigned i
 		case 4:
 			info->flags[FLAG_E] = true;
 			// fall through here
+		case 0:
 		case 3:
 			if (operand.length > 2 && operand.start[operand.length - 2] == ',' && operand.start[operand.length - 1] == 'X') {
 				info->flags[FLAG_N] = true;
 				info->flags[FLAG_I] = true;
 				info->flags[FLAG_X] = true;
+
+				// trim ,X off the end
+				operand.length -= 2;
 			}
 			else if (operand.start[0] == '#') {
 				info->flags[FLAG_N] = false;
 				info->flags[FLAG_I] = true;
 				info->flags[FLAG_X] = false;
+
+				// trim # off the beginning
+				operand.start += 1;
+				operand.length -= 1;
 			}
 			else if (operand.start[0] == '@') {
 				info->flags[FLAG_N] = true;
 				info->flags[FLAG_I] = false;
 				info->flags[FLAG_X] = false;
+
+				// trim @ off the beginning
+				operand.start += 1;
+				operand.length -= 1;
 			}
+			else if (operand.start[0] == '=') {
+				// trim = off the beginning
+				operand.start += 1;
+				operand.length -= 1;
+
+				// TODO: add to literal pool
+			}
+			break;
 	}
 
 	// calculate these later during target address calculation
@@ -177,4 +205,17 @@ void parse_operand(struct assembler_state* state, struct str operand, unsigned i
 	info->flags[FLAG_B] = false;
 
 	info->operand = operand;
+}
+
+unsigned int parse_operand_2(struct str s)
+{
+	if (s.length > 3 && (s.start[0] == 'C' || s.start[0] == 'X') && s.start[1] == '\'' && s.start[s.length - 1] == '\'')
+	{
+		// handle string
+		return 0;
+	}
+	else
+	{
+		return decimal_to_decimal(s);
+	}
 }
