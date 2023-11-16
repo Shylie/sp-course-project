@@ -159,6 +159,8 @@ extern const directive_func DIR_USE;
 extern const directive_func DIR_LTORG;
 extern const directive_func DIR_MACRO;
 extern const directive_func DIR_MEND;
+extern const directive_func DIR_EXTDEF;
+extern const directive_func DIR_EXTREF;
 
 extern const char* const  DEFAULT_BLOCK_NAME;
 extern const unsigned int DEFAULT_BLOCK_LENGTH;

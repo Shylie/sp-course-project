@@ -61,6 +61,14 @@ static void dir_mend(struct assembler_state* state, struct line_info* info)
 {
 }
 
+static void dir_extdef(struct assembler_state* state, struct line_info* info)
+{
+}
+
+static void dir_extref(struct assembler_state* state, struct line_info* info)
+{
+}
+
 const directive_func DIR_START  = dir_start;
 const directive_func DIR_END    = dir_end;
 const directive_func DIR_BYTE   = dir_byte;
@@ -73,6 +81,8 @@ const directive_func DIR_USE    = dir_use;
 const directive_func DIR_LTORG  = dir_ltorg;
 const directive_func DIR_MACRO  = dir_macro;
 const directive_func DIR_MEND   = dir_mend;
+const directive_func DIR_EXTDEF = dir_extdef;
+const directive_func DIR_EXTREF = dir_extref;
 
 const char* const  DEFAULT_BLOCK_NAME   = "  ";
 const unsigned int DEFAULT_BLOCK_LENGTH = 2;
