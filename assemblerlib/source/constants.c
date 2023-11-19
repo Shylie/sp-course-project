@@ -2,6 +2,7 @@
 #include "assemblerlib-private.h"
 
 #include <assert.h>
+#include <limits.h>
 
 static void fill_op_entry_full(struct assembler_state* state, const char* key, unsigned int opcode, unsigned char format, enum opty opty, directive_func func)
 {
@@ -14,6 +15,16 @@ static void fill_op_entry(struct assembler_state* state, const char* key, unsign
 	fill_op_entry_full(state, key, opcode, format, opty, NULL);
 }
 
+static void add_symbol(struct assembler_state* state, const char* key, unsigned int value)
+{
+	struct symbol_table_entry entry =
+	{
+		.line_number = UINT_MAX,
+		.value = value
+	};
+	map_set(&state->symbol_table, key, &entry);
+}
+
 struct assembler_state assembler_state_new(void)
 {
 	struct assembler_state state =
@@ -23,7 +34,7 @@ struct assembler_state assembler_state_new(void)
 		.line_infos = array_new(sizeof(struct line_info), 16),
 		.current_block = (struct str){ .start = DEFAULT_BLOCK_NAME, .length = DEFAULT_BLOCK_LENGTH },
 		.location_counters = map_new(sizeof(unsigned int)),
-		.program_name = (char[]){ ' ', ' ', ' ', ' ', ' ', ' ' },
+		.program_name = { ' ', ' ', ' ', ' ', ' ', ' ' },
 		.program_length = 0,
 		.program_start = 0,
 		.program_first_instruction = 0
@@ -135,18 +146,29 @@ struct assembler_state assembler_state_new(void)
 	fill_op_entry(&state, "TIO", OP_TIO, 1, OPTY_XE);
 	fill_op_entry(&state, "TIXR", OP_TIXR, 2, OPTY_XE);
 
-	fill_op_entry_full(&state, "START", 0, 0, OPTY_DIR, DIR_START);
-	fill_op_entry_full(&state, "END", 0, 0, OPTY_DIR, DIR_END);
-	fill_op_entry_full(&state, "BYTE", 0, 0, OPTY_DIR, DIR_BYTE);
-	fill_op_entry_full(&state, "WORD", 0, 0, OPTY_DIR, DIR_WORD);
-	fill_op_entry_full(&state, "RESB", 0, 0, OPTY_DIR, DIR_RESB);
-	fill_op_entry_full(&state, "RESW", 0, 0, OPTY_DIR, DIR_RESW);
-	fill_op_entry_full(&state, "BASE", 0, 0, OPTY_DIR, DIR_BASE);
-	fill_op_entry_full(&state, "UNBASE", 0, 0, OPTY_DIR, DIR_UNBASE);
-	fill_op_entry_full(&state, "USE", 0, 0, OPTY_DIR, DIR_USE);
-	fill_op_entry_full(&state, "LTORG", 0, 0, OPTY_DIR, DIR_LTORG);
-	fill_op_entry_full(&state, "MACRO", 0, 0, OPTY_DIR, DIR_MACRO);
-	fill_op_entry_full(&state, "MEND", 0, 0, OPTY_DIR, DIR_MEND);
+	fill_op_entry_full(&state, "START", 0, 0, OPTY_DIR_2, DIR_START);
+	fill_op_entry_full(&state, "END", 0, 0, OPTY_DIR_2, DIR_END);
+	fill_op_entry_full(&state, "BYTE", 0, 0, OPTY_DIR_1, DIR_BYTE);
+	fill_op_entry_full(&state, "WORD", 0, 0, OPTY_DIR_1, DIR_WORD);
+	fill_op_entry_full(&state, "RESB", 0, 0, OPTY_DIR_1, DIR_RESB);
+	fill_op_entry_full(&state, "RESW", 0, 0, OPTY_DIR_1, DIR_RESW);
+	fill_op_entry_full(&state, "BASE", 0, 0, OPTY_DIR_2, DIR_BASE);
+	fill_op_entry_full(&state, "UNBASE", 0, 0, OPTY_DIR_2, DIR_UNBASE);
+	fill_op_entry_full(&state, "USE", 0, 0, OPTY_DIR_1, DIR_USE);
+	fill_op_entry_full(&state, "LTORG", 0, 0, OPTY_DIR_1, DIR_LTORG);
+	fill_op_entry_full(&state, "MACRO", 0, 0, OPTY_DIR_1, DIR_MACRO);
+	fill_op_entry_full(&state, "MEND", 0, 0, OPTY_DIR_1, DIR_MEND);
+	fill_op_entry_full(&state, "EQU", 0, 0, OPTY_DIR_2, DIR_EQU);
+
+	add_symbol(&state, "A", 0);
+	add_symbol(&state, "X", 1);
+	add_symbol(&state, "L", 2);
+	add_symbol(&state, "B", 3);
+	add_symbol(&state, "S", 4);
+	add_symbol(&state, "T", 5);
+	add_symbol(&state, "F", 6);
+	//add_symbol(&state, "PC", 8);
+	//add_symbol(&state, "SW", 9);
 
 	return state;
 }
@@ -165,3 +187,6 @@ unsigned int* assembler_state_location_counter(struct assembler_state* state)
 	assert(ctr); // badness if null
 	return ctr;
 }
+
+const char* const  DEFAULT_BLOCK_NAME   = "[default block]";
+const unsigned int DEFAULT_BLOCK_LENGTH = 15;

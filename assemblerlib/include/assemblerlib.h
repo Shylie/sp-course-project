@@ -3,6 +3,6 @@
 
 #include <stdbool.h>
 
-struct array assemble(const char** sources);
+char* assemble(const char* source);
 
 #endif//ASSEMBLERLIB_H

@@ -24,24 +24,20 @@ static struct str read_file(const char* fname)
 	return (struct str) { .start = buffer, .length = size };
 }
 
-struct array assemble(const char** sources)
+char* assemble(const char* source)
 {
-	struct array states = array_new(sizeof(struct assembler_state), 0);
+	struct str file_contents = read_file(source);
 
-	for (unsigned int index = 0; sources[index]; index++)
+	char* c = NULL;
+
+	if (file_contents.start)
 	{
-		struct str file_contents = read_file(sources[index]);
-
-		if (file_contents.start)
-		{
-			struct assembler_state state = assembler_state_new();
-			array_append(&states, &state);
-
-			parse_file(array_at(&states, array_size(&states) - 1), file_contents);
-		}
-
-		cl_realloc(&file_contents, 0);
+		struct assembler_state state = assembler_state_new();
+		c = parse_file(&state, file_contents);
+		assembler_state_del(&state);
 	}
 
-	return states;
+	cl_realloc(&file_contents, 0);
+
+	return c;
 }

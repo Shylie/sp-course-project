@@ -1,9 +1,11 @@
 #include "assemblerlib-private.h"
 
+#include <limits.h>
+
 static void dir_start(struct assembler_state* state, struct line_info* info)
 {
 	*assembler_state_location_counter(state) = 0; // set to actual value
-	memcpy(&state->program_name, info->operand.start, info->operand.length < 6 ? info->operand.length : 6);
+	memcpy(state->program_name, info->label.start, info->label.length < 6 ? info->label.length : 6);
 }
 
 static void dir_end(struct assembler_state* state, struct line_info* info)
@@ -21,28 +23,47 @@ static void dir_end(struct assembler_state* state, struct line_info* info)
 
 static void dir_byte(struct assembler_state* state, struct line_info* info)
 {
+	info->operation.format = 5;
+	unsigned int tmp = parse_operand_2(state, info->operand);
+
+	unsigned int len = 0;
+	while (tmp > 0)
+	{
+		tmp /= 2;
+		len += 1;
+	}
+
+	info->operation.opcode = (len + 7) / 8;
+
+	*assembler_state_location_counter(state) += info->operation.opcode;
 }
 
 static void dir_word(struct assembler_state* state, struct line_info* info)
 {
+	info->operation.format = 6;
+	info->operation.opcode = parse_operand_2(state, info->operand);
+
+	*assembler_state_location_counter(state) += 3;
 }
 
 static void dir_resb(struct assembler_state* state, struct line_info* info)
 {
-	*assembler_state_location_counter(state) += parse_operand_2(info->operand);
+	*assembler_state_location_counter(state) += parse_operand_2(state, info->operand);
 }
 
 static void dir_resw(struct assembler_state* state, struct line_info* info)
 {
-	*assembler_state_location_counter(state) += 3 * parse_operand_2(info->operand);
+	*assembler_state_location_counter(state) += 3 * parse_operand_2(state, info->operand);
 }
 
 static void dir_base(struct assembler_state* state, struct line_info* info)
 {
+	info->base = parse_operand_2(state, info->operand);
 }
 
 static void dir_unbase(struct assembler_state* state, struct line_info* info)
 {
+	info->base = -1;
 }
 
 static void dir_use(struct assembler_state* state, struct line_info* info)
@@ -69,6 +90,16 @@ static void dir_extref(struct assembler_state* state, struct line_info* info)
 {
 }
 
+static void dir_equ(struct assembler_state* state, struct line_info* info)
+{
+	struct symbol_table_entry entry =
+	{
+		.line_number = UINT_MAX,
+		.value = parse_operand_2(state, info->operand)
+	};
+	map_setn(&state->symbol_table, info->label.start, info->label.length, &entry);
+}
+
 const directive_func DIR_START  = dir_start;
 const directive_func DIR_END    = dir_end;
 const directive_func DIR_BYTE   = dir_byte;
@@ -83,6 +114,4 @@ const directive_func DIR_MACRO  = dir_macro;
 const directive_func DIR_MEND   = dir_mend;
 const directive_func DIR_EXTDEF = dir_extdef;
 const directive_func DIR_EXTREF = dir_extref;
-
-const char* const  DEFAULT_BLOCK_NAME   = "  ";
-const unsigned int DEFAULT_BLOCK_LENGTH = 2;
+const directive_func DIR_EQU    = dir_equ;

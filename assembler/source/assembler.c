@@ -16,11 +16,14 @@ struct data
 
 int main(int argc, char** argv)
 {
-	struct array arr = assemble((const char* []) { "basic.txt", NULL });
-
-	array_del(&arr);
+	char* c = assemble("literals.txt");
+	if (c)
+	{
+		printf("%s\n", c);
+		free(c);
+	}
 
 	getchar();
 
-	return 0;
+	return (c ? EXIT_SUCCESS : EXIT_FAILURE);
 }

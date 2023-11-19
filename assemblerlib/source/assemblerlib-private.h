@@ -81,7 +81,8 @@ struct operation_table_entry
 	{
 		OPTY_SIC,
 		OPTY_XE,
-		OPTY_DIR
+		OPTY_DIR_1,
+		OPTY_DIR_2
 	} type;
 	directive_func directive;
 };
@@ -93,7 +94,8 @@ enum flags
 	FLAG_X,
 	FLAG_B,
 	FLAG_P,
-	FLAG_E
+	FLAG_E,
+	FLAG_COUNT
 };
 
 struct str
@@ -105,20 +107,18 @@ struct str
 struct symbol_table_entry
 {
 	unsigned int line_number;
-	int          value;
+	long         value;
 };
 
 struct line_info
 {
 	struct str                   line;
+	struct str                   label;
 	struct operation_table_entry operation;
 	struct str                   operand;
-	union
-	{
-		bool                     flags[6];
-		unsigned char            flag;
-	};
+	bool                         flags[FLAG_COUNT];
 	unsigned int                 location;
+	long                         base;
 	const char*                  error;
 };
 
@@ -135,17 +135,53 @@ struct assembler_state
 	unsigned int program_first_instruction;
 };
 
+struct header_record
+{
+	char magic_number;
+	char program_name[6];
+	char program_start[6];
+	char program_length[6];
+	char newline;
+};
+
+struct text_record
+{
+	char magic_number;
+	char object_code_start[6];
+	char object_code_length[2];
+	char object_code[60];
+	char newline;
+};
+
+struct end_record
+{
+	char magic_number;
+	char first_instruction[6];
+	char newline;
+};
+
+struct program
+{
+	struct header_record header_record;
+	struct array         text_records;
+	struct end_record    end_record;
+};
+
 struct assembler_state assembler_state_new(void);
 void assembler_state_del(struct assembler_state* state);
 
 unsigned int* assembler_state_location_counter(struct assembler_state* state);
 
-void parse_file(struct assembler_state* state, struct str source);
-void parse_line(struct assembler_state* state, struct str line, unsigned int linenum);
-void parse_label(struct assembler_state* state, struct str label, unsigned int linenum);
-void parse_operation(struct assembler_state* state, struct str operation, unsigned int linenum);
-void parse_operand(struct assembler_state* state, struct str operand, unsigned int linenum);
-unsigned int parse_operand_2(struct str operand);
+char* parse_file(struct assembler_state* state, struct str source);
+void  parse_line(struct assembler_state* state, struct str line, unsigned int linenum);
+void  parse_label(struct assembler_state* state, struct str label, unsigned int linenum);
+void  parse_operation(struct assembler_state* state, struct str operation, unsigned int linenum);
+void  parse_operand(struct assembler_state* state, struct str operand, unsigned int linenum);
+unsigned int parse_operand_2(struct assembler_state* state, struct str operand);
+
+void finish_text_record(struct program* p, unsigned int start, unsigned int end);
+struct text_record* current_record(struct program* p);
+unsigned int calculate_target_address(struct line_info* info, long target);
 
 extern const directive_func DIR_START;
 extern const directive_func DIR_END;
@@ -161,6 +197,7 @@ extern const directive_func DIR_MACRO;
 extern const directive_func DIR_MEND;
 extern const directive_func DIR_EXTDEF;
 extern const directive_func DIR_EXTREF;
+extern const directive_func DIR_EQU;
 
 extern const char* const  DEFAULT_BLOCK_NAME;
 extern const unsigned int DEFAULT_BLOCK_LENGTH;
