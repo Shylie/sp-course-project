@@ -146,7 +146,7 @@ char* parse_file(struct assembler_state* state, struct str source)
 		struct str line = *(struct str*)array_at(&lines, i);
 		parse_line(state, line, i);
 
-		struct line_info* info = array_at(&state->line_infos, i);
+		struct line_info* info = array_at(&state->line_infos, array_size(&state->line_infos) - 1);
 
 		info->location = *assembler_state_location_counter(state);
 		info->line = line;
@@ -162,6 +162,7 @@ char* parse_file(struct assembler_state* state, struct str source)
 
 		printf("%X\t%.*s\n", info->location, line.length, line.start);
 	}
+	place_literals(state);
 
 	// pass 2
 	for (unsigned int i = 0; i < array_size(&state->line_infos); i++)
@@ -246,8 +247,8 @@ char* parse_file(struct assembler_state* state, struct str source)
 		case 2:
 			if (info->operand.length == 3)
 			{
-				unsigned int* r1 = map_getn(&state->symbol_table, info->operand.start, 1);
-				unsigned int* r2 = map_getn(&state->symbol_table, info->operand.start + 2, 1);
+				struct symbol_table_entry* r1 = map_getn(&state->symbol_table, info->operand.start, 1);
+				struct symbol_table_entry* r2 = map_getn(&state->symbol_table, info->operand.start + 2, 1);
 				if (r1 && r2)
 				{
 					if (info->location + 2 >= text_record_start + MAX_TEXT_RECORD_LENGTH / 2)
@@ -258,8 +259,8 @@ char* parse_file(struct assembler_state* state, struct str source)
 					}
 
 					char c[5];
-					snprintf(c, 5, "%.4X", 
-						(info->operation.opcode << 8) | ((*r1) << 4) | (*r2)
+					snprintf(c, 5, "%.4X",
+						(info->operation.opcode << 8) | (r1->value << 4) | r2->value
 					);
 					memcpy(current_record(&program)->object_code + text_record_address, c, 4);
 					text_record_address += 4;
@@ -268,7 +269,7 @@ char* parse_file(struct assembler_state* state, struct str source)
 			}
 			else if (info->operand.length == 1)
 			{
-				unsigned int* r1 = map_getn(&state->symbol_table, info->operand.start, 1);
+				struct symbol_table_entry* r1 = map_getn(&state->symbol_table, info->operand.start, 1);
 				if (r1)
 				{
 					if (info->location + 2 >= text_record_start + MAX_TEXT_RECORD_LENGTH / 2)
@@ -280,7 +281,7 @@ char* parse_file(struct assembler_state* state, struct str source)
 
 					char c[5];
 					snprintf(c, 5, "%.4X",
-						(info->operation.opcode << 8) | ((*r1) << 4)
+						(info->operation.opcode << 8) | (r1->value << 4)
 					);
 					memcpy(current_record(&program)->object_code + text_record_address, c, 4);
 					text_record_address += 4;
@@ -297,7 +298,11 @@ char* parse_file(struct assembler_state* state, struct str source)
 			if (info->operand.start)
 			{
 				long target = parse_operand_2(state, info->operand);
-				code |= calculate_target_address(info, target, false);
+				code |= calculate_target_address(info, target);
+			}
+			else
+			{
+				code |= (0b110000 << 12);
 			}
 
 			if (info->error)
@@ -326,7 +331,7 @@ char* parse_file(struct assembler_state* state, struct str source)
 			if (info->operand.start)
 			{
 				long target = parse_operand_2(state, info->operand);
-				code |= calculate_target_address(info, target, true);
+				code |= calculate_target_address(info, target);
 			}
 
 			if (info->location + 4 >= text_record_start + MAX_TEXT_RECORD_LENGTH / 2)
@@ -361,7 +366,7 @@ char* parse_file(struct assembler_state* state, struct str source)
 			}
 
 			char c[61];
-			snprintf(c, 2 * len + 1, "%.*X", 2 * len, parse_operand_2(state, info->operand));
+			snprintf(c, 2 * len + 1, "%.*X", 2 * len, info->operand.start ? parse_operand_2(state, info->operand) : info->location);
 			memcpy(current_record(&program)->object_code + text_record_address, c, 2 * len);
 			text_record_address += 2 * len;
 			break;
@@ -389,6 +394,7 @@ char* parse_file(struct assembler_state* state, struct str source)
 	{
 		finish_text_record(&program, text_record_start, text_record_start + text_record_address / 2);
 	}
+	array_remove(&program.text_records, array_size(&program.text_records) - 1);
 
 	bool err = false;
 	for (int i = 0; i < array_size(&state->line_infos); i++)
@@ -396,7 +402,7 @@ char* parse_file(struct assembler_state* state, struct str source)
 		struct line_info* info = array_at(&state->line_infos, i);
 		if (info->error)
 		{
-			fprintf(stderr, "%s\n%.*s\n\n", info->error, info->line.length - 1, info->line.start);
+			fprintf(stderr, "[line %d]: %.*s\n%s\n\n", i, info->line.length - 1, info->line.start, info->error);
 
 			err = true;
 		}
@@ -427,6 +433,9 @@ void parse_line(struct assembler_state* state, struct str line, unsigned int lin
 
 	struct line_info info;
 	memset(&info, 0, sizeof(struct line_info));
+	info.flags[FLAG_N] = true;
+	info.flags[FLAG_I] = true;
+	info.line_number = linenum;
 	array_append(&state->line_infos, &info);
 
 	const size_t sz = array_size(&tokens);
@@ -444,17 +453,17 @@ void parse_line(struct assembler_state* state, struct str line, unsigned int lin
 		parse_operation(state, *(struct str*)array_at(&tokens, 0), linenum);
 	}
 	else if (sz > 0)
-		((struct line_info*)array_at(&state->line_infos, linenum))->error = "invalid syntax";
+		((struct line_info*)array_at(&state->line_infos, array_size(&state->line_infos) - 1))->error = "invalid syntax";
 
 	array_del(&tokens);
 }
 
 void parse_label(struct assembler_state* state, struct str label, unsigned int linenum)
 {
-	((struct line_info*)array_at(&state->line_infos, linenum))->label = label;
+	((struct line_info*)array_at(&state->line_infos, array_size(&state->line_infos) - 1))->label = label;
 
 	if (map_getn(&state->symbol_table, label.start, label.length))
-		((struct line_info*)array_at(&state->line_infos, linenum))->error = "multiple defitions for label";
+		((struct line_info*)array_at(&state->line_infos, array_size(&state->line_infos) - 1))->error = "multiple defitions for label";
 	else {
 		struct symbol_table_entry entry = { .line_number = linenum, .value = *assembler_state_location_counter(state) };
 		map_setn(&state->symbol_table, label.start, label.length, &entry);
@@ -466,60 +475,82 @@ void parse_operation(struct assembler_state* state, struct str operation, unsign
 	struct operation_table_entry* op = map_getn(&state->operation_table, operation.start, operation.length);
 
 	if (op)
-		((struct line_info*)array_at(&state->line_infos, linenum))->operation = *op;
+		((struct line_info*)array_at(&state->line_infos, array_size(&state->line_infos) - 1))->operation = *op;
 	else
-		((struct line_info*)array_at(&state->line_infos, linenum))->error = "unknown operation";
+		((struct line_info*)array_at(&state->line_infos, array_size(&state->line_infos) - 1))->error = "unknown operation";
 }
 
 void parse_operand(struct assembler_state* state, struct str operand, unsigned int linenum)
 {
-	struct line_info* info = array_at(&state->line_infos, linenum);
+	struct line_info* info = array_at(&state->line_infos, array_size(&state->line_infos) - 1);
 
 	switch (info->operation.format) {
-		case 4:
-			info->flags[FLAG_E] = true;
-			// fall through here
-		case 0:
-		case 3:
-			if (operand.length > 2 && operand.start[operand.length - 2] == ',' && operand.start[operand.length - 1] == 'X') {
-				info->flags[FLAG_N] = true;
-				info->flags[FLAG_I] = true;
-				info->flags[FLAG_X] = true;
+	case 4:
+		info->flags[FLAG_E] = true;
+		// fall through here
+	case 0:
+	case 3:
+		if (operand.length > 2 && operand.start[operand.length - 2] == ',' && operand.start[operand.length - 1] == 'X') {
+			info->flags[FLAG_N] = true;
+			info->flags[FLAG_I] = true;
+			info->flags[FLAG_X] = true;
 
-				// trim ,X off the end
-				operand.length -= 2;
-			}
-			else if (operand.start[0] == '#') {
-				info->flags[FLAG_N] = false;
-				info->flags[FLAG_I] = true;
-				info->flags[FLAG_X] = false;
+			// trim ,X off the end
+			operand.length -= 2;
+		}
+		else if (operand.start[0] == '#') {
+			info->flags[FLAG_N] = false;
+			info->flags[FLAG_I] = true;
+			info->flags[FLAG_X] = false;
 
-				// trim # off the beginning
-				operand.start += 1;
-				operand.length -= 1;
-			}
-			else if (operand.start[0] == '@') {
-				info->flags[FLAG_N] = true;
-				info->flags[FLAG_I] = false;
-				info->flags[FLAG_X] = false;
+			// trim # off the beginning
+			operand.start += 1;
+			operand.length -= 1;
+		}
+		else if (operand.start[0] == '@') {
+			info->flags[FLAG_N] = true;
+			info->flags[FLAG_I] = false;
+			info->flags[FLAG_X] = false;
 
-				// trim @ off the beginning
-				operand.start += 1;
-				operand.length -= 1;
-			}
-			else if (operand.start[0] == '=') {
-				// trim = off the beginning
-				operand.start += 1;
-				operand.length -= 1;
+			// trim @ off the beginning
+			operand.start += 1;
+			operand.length -= 1;
+		}
+		else if (operand.start[0] == '=') {
+			info->flags[FLAG_N] = true;
+			info->flags[FLAG_I] = true;
+			info->flags[FLAG_X] = false;
 
-				// TODO: add to literal pool
+			const unsigned int value = parse_operand_2(
+				state,
+				(struct str) {
+				.start = operand.start + 1, .length = operand.length - 1
 			}
-			else
+			);
+
+			struct literal_table_entry literal =
 			{
-				info->flags[FLAG_N] = true;
-				info->flags[FLAG_I] = true;
+				.value = value,
+				.address = -1
+			};
+
+			bool found = false;
+			for (size_t i = 0; i < array_size(&state->literals); i++)
+			{
+				struct literal_table_entry* entry = array_at(&state->literals, i);
+				if (value == entry->value)
+				{
+					found = true;
+					break;
+				}
 			}
-			break;
+
+			if (!found)
+			{
+				array_append(&state->literals, &literal);
+			}
+		}
+		break;
 	}
 
 	// calculate these later during target address calculation
@@ -531,20 +562,38 @@ void parse_operand(struct assembler_state* state, struct str operand, unsigned i
 
 unsigned int parse_operand_2(struct assembler_state* state, struct str s)
 {
-	if (s.length > 3 && (s.start[0] == 'C' || s.start[0] == 'X') && s.start[1] == '\'' && s.start[s.length - 1] == '\'')
+	if (s.start[0] == '=')
+	{
+		const unsigned int value = parse_operand_2(
+			state,
+			(struct str){ .start = s.start + 1, .length = s.length - 1 }
+		);
+
+		for (size_t i = 0; i < array_size(&state->literals); i++)
+		{
+			struct literal_table_entry* literal = array_at(&state->literals, i);
+			if (value == literal->value)
+			{
+				return literal->address;
+			}
+		}
+
+		return 0;
+	}
+	else if (s.length > 3 && (s.start[0] == 'C' || s.start[0] == 'X') && s.start[1] == '\'' && s.start[s.length - 1] == '\'')
 	{
 		unsigned int value = 0;
 
 		if (s.start[0] == 'C')
 		{
-			for (int offset = 2; offset < s.length - 3; offset++)
+			for (int offset = 2; offset < s.length - 1; offset++)
 			{
 				value = (value << 8) + s.start[offset];
 			}
 		}
 		else
 		{
-			for (int offset = 2; offset < s.length - 3; offset++)
+			for (int offset = 2; offset < s.length - 1; offset++)
 			{
 				unsigned int cval;
 				if (s.start[offset] >= '0' && s.start[offset] <= '9')
@@ -558,6 +607,10 @@ unsigned int parse_operand_2(struct assembler_state* state, struct str s)
 				else if (s.start[offset] >= 'a' && s.start[offset] <= 'f')
 				{
 					cval = s.start[offset] - 'a' + 10;
+				}
+				else
+				{
+					continue;
 				}
 
 				value = (value << 4) + cval;
@@ -656,25 +709,27 @@ unsigned int calculate_target_address(struct line_info* info, long target)
 	}
 	else
 	{
-		if (target >= 0 && target <= 4097 && info->flags[FLAG_I] && !info->flags[FLAG_N])
+		if (target >= 0 && target <= 4095 && !info->flags[FLAG_N] && info->flags[FLAG_I])
 		{
-			// do nothing. already done.
+			// immediate mode is neither pc nor base relative by default
 		}
-		else if (info->base >= 0 && target - (long)info->base >= 0 && target - (long)info->base <= 4095)
+		else if (target - (long)info->location >= -2047 && target - (long)info->location <= 2048)
 		{
-			info->flags[FLAG_B] = true;
-			target -= info->base;
-			code |= (0b00100 << 12);
-		}
-		else if (target - (long)info->location >= -2048 && target - (long)info->location <= 2047)
-		{
+			// pc relative
 			info->flags[FLAG_P] = true;
 			target -= info->location + info->operation.format;
 			code |= (0b000010 << 12);
 		}
-		else if (target >= 0 && target <= 4097)
+		else if (info->base >= 0 && target - (long)info->base >= 0 && target - (long)info->base <= 4095)
 		{
-
+			// base relative
+			info->flags[FLAG_B] = true;
+			target -= info->base;
+			code |= (0b00100 << 12);
+		}
+		else if (target >= 0 && target <= 4095)
+		{
+			// neither
 		}
 		else
 		{
@@ -700,4 +755,32 @@ unsigned int calculate_target_address(struct line_info* info, long target)
 	code |= (target & (info->flags[FLAG_E] ? 0b11111111111111111111 : 0b111111111111));
 
 	return code;
+}
+
+void place_literals(struct assembler_state* state)
+{
+	for (size_t i = 0; i < array_size(&state->literals); i++)
+	{
+		struct literal_table_entry* literal = array_at(&state->literals, i);
+		if (literal->address == -1)
+		{
+			literal->address = *assembler_state_location_counter(state);
+			*assembler_state_location_counter(state) += 3;
+
+			unsigned int tmp = literal->value;
+			unsigned int len = 0;
+			while (tmp > 0)
+			{
+				tmp /= 2;
+				len += 1;
+			}
+
+			struct line_info info;
+			memset(&info, 0, sizeof(struct line_info));
+			info.operation.format = 5;
+			info.operation.opcode = (len + 7) / 8;
+			info.location = literal->value;
+			array_append(&state->line_infos, &info);
+		}
+	}
 }

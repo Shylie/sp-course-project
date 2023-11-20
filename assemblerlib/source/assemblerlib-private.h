@@ -110,6 +110,12 @@ struct symbol_table_entry
 	long         value;
 };
 
+struct literal_table_entry
+{
+	unsigned int value;
+	long         address;
+};
+
 struct line_info
 {
 	struct str                   line;
@@ -120,6 +126,7 @@ struct line_info
 	unsigned int                 location;
 	long                         base;
 	const char*                  error;
+	unsigned int                 line_number;
 };
 
 struct assembler_state
@@ -129,6 +136,7 @@ struct assembler_state
 	struct array line_infos;
 	struct str current_block;
 	struct map location_counters;
+	struct array literals;
 	char program_name[6];
 	unsigned int program_length;
 	unsigned int program_start;
@@ -178,10 +186,11 @@ void  parse_label(struct assembler_state* state, struct str label, unsigned int 
 void  parse_operation(struct assembler_state* state, struct str operation, unsigned int linenum);
 void  parse_operand(struct assembler_state* state, struct str operand, unsigned int linenum);
 unsigned int parse_operand_2(struct assembler_state* state, struct str operand);
+void place_literals(struct assembler_state* state);
 
+unsigned int calculate_target_address(struct line_info* info, long target);
 void finish_text_record(struct program* p, unsigned int start, unsigned int end);
 struct text_record* current_record(struct program* p);
-unsigned int calculate_target_address(struct line_info* info, long target);
 
 extern const directive_func DIR_START;
 extern const directive_func DIR_END;

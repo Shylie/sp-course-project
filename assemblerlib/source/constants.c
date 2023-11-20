@@ -34,6 +34,7 @@ struct assembler_state assembler_state_new(void)
 		.line_infos = array_new(sizeof(struct line_info), 16),
 		.current_block = (struct str){ .start = DEFAULT_BLOCK_NAME, .length = DEFAULT_BLOCK_LENGTH },
 		.location_counters = map_new(sizeof(unsigned int)),
+		.literals = array_new(sizeof(struct literal_table_entry), 16),
 		.program_name = { ' ', ' ', ' ', ' ', ' ', ' ' },
 		.program_length = 0,
 		.program_start = 0,
@@ -179,6 +180,7 @@ void assembler_state_del(struct assembler_state* state)
 	map_del(&state->symbol_table);
 	array_del(&state->line_infos);
 	map_del(&state->location_counters);
+	array_del(&state->literals);
 }
 
 unsigned int* assembler_state_location_counter(struct assembler_state* state)
