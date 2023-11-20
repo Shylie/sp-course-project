@@ -138,7 +138,6 @@ struct assembler_state
 	struct map location_counters;
 	struct array literals;
 	char program_name[6];
-	unsigned int program_length;
 	unsigned int program_start;
 	unsigned int program_first_instruction;
 };

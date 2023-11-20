@@ -36,7 +36,6 @@ struct assembler_state assembler_state_new(void)
 		.location_counters = map_new(sizeof(unsigned int)),
 		.literals = array_new(sizeof(struct literal_table_entry), 16),
 		.program_name = { ' ', ' ', ' ', ' ', ' ', ' ' },
-		.program_length = 0,
 		.program_start = 0,
 		.program_first_instruction = 0
 	};

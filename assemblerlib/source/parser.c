@@ -160,7 +160,7 @@ char* parse_file(struct assembler_state* state, struct str source)
 			*assembler_state_location_counter(state) += info->operation.format;
 		}
 
-		printf("%X\t%.*s\n", info->location, line.length, line.start);
+		//printf("%X\t%.*s\n", info->location, line.length, line.start);
 	}
 	place_literals(state);
 
@@ -201,6 +201,11 @@ char* parse_file(struct assembler_state* state, struct str source)
 	program.header_record.newline = '\n';
 	program.text_records = array_new(sizeof(struct text_record), 1);
 	program.end_record.magic_number = 'E';
+	{
+		char buf[7];
+		snprintf(buf, 7, "%.6X", state->program_first_instruction);
+		memcpy(program.end_record.first_instruction, buf, 6);
+	}
 	program.end_record.newline = '\n';
 
 	{
