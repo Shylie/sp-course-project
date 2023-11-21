@@ -68,6 +68,21 @@ static void dir_unbase(struct assembler_state* state, struct line_info* info)
 
 static void dir_use(struct assembler_state* state, struct line_info* info)
 {
+	if (info->operand.start)
+	{
+		unsigned int* prev_location = map_getn(&state->location_counters, info->operand.start, info->operand.length);
+		const unsigned int location = prev_location ? *prev_location : 0;
+		map_setn(&state->location_counters, info->operand.start, info->operand.length, &location);
+		state->current_block.start  = info->operand.start;
+		state->current_block.length = info->operand.length;
+
+		info->location = location;
+	}
+	else
+	{
+		state->current_block.start  = DEFAULT_BLOCK_NAME;
+		state->current_block.length = DEFAULT_BLOCK_LENGTH;
+	}
 }
 
 static void dir_ltorg(struct assembler_state* state, struct line_info* info)

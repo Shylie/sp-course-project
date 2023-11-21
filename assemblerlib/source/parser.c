@@ -160,7 +160,7 @@ char* parse_file(struct assembler_state* state, struct str source)
 			*assembler_state_location_counter(state) += info->operation.format;
 		}
 
-		//printf("%X\t%.*s\n", info->location, line.length, line.start);
+		printf("%X\t%.*s\n", info->location, line.length, line.start);
 	}
 	place_literals(state);
 
