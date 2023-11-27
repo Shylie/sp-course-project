@@ -123,3 +123,16 @@ void map_setn(struct map* m, const char* key, size_t keylen, const void* elem)
 	// only use element_size to avoid overwiting key
 	memmove(found, elem, m->element_size);
 }
+
+void map_foreach(struct map* m, void (*fn)(const char* key, void* elem, void* ud), void* ud)
+{
+	for (size_t i = 0; i < 27 * 27; i++)
+	{
+		for (size_t j = 0; j < array_size(&m->bins[i]); j++)
+		{
+			void* value = array_at(&m->bins[i], j);
+			char* key = *get_key(value, m->element_size);
+			fn(key, value, ud);
+		}
+	}
+}

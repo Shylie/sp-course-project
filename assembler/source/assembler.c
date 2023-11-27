@@ -16,7 +16,7 @@ struct data
 
 int main(int argc, char** argv)
 {
-	char* c = assemble("prog_blocks.txt");
+	char* c = assemble("literals.txt");
 	if (c)
 	{
 		printf("%s\n", c);

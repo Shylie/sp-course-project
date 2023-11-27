@@ -146,7 +146,7 @@ struct assembler_state assembler_state_new(void)
 	fill_op_entry(&state, "TIO", OP_TIO, 1, OPTY_XE);
 	fill_op_entry(&state, "TIXR", OP_TIXR, 2, OPTY_XE);
 
-	fill_op_entry_full(&state, "START", 0, 0, OPTY_DIR_2, DIR_START);
+	fill_op_entry_full(&state, "START", 0, 0, OPTY_DIR_1, DIR_START);
 	fill_op_entry_full(&state, "END", 0, 0, OPTY_DIR_2, DIR_END);
 	fill_op_entry_full(&state, "BYTE", 0, 0, OPTY_DIR_1, DIR_BYTE);
 	fill_op_entry_full(&state, "WORD", 0, 0, OPTY_DIR_1, DIR_WORD);

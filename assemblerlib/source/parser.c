@@ -9,6 +9,14 @@ enum
 	MAX_TEXT_RECORD_LENGTH = 60
 };
 
+static unsigned int map_max(const char* key, unsigned int* value, unsigned int* ud)
+{
+	if (*ud < *value)
+	{
+		*ud = *value;
+	}
+}
+
 static struct array split_file(struct str file)
 {
 	struct array lines = array_new(sizeof(struct str), 0);
@@ -198,6 +206,17 @@ char* parse_file(struct assembler_state* state, struct str source)
 	memset(&program, ' ', sizeof(program));
 	program.header_record.magic_number = 'H';
 	memcpy(&program.header_record.program_name, &state->program_name, 6);
+	{
+		char buf[7];
+		snprintf(buf, 7, "%.6X", state->program_start);
+		memcpy(program.header_record.program_start, buf, 6);
+
+		unsigned int maxloc = state->program_start;
+		map_foreach(&state->location_counters, map_max, &maxloc);
+
+		snprintf(buf, 7, "%.6X", maxloc - state->program_start);
+		memcpy(program.header_record.program_length, buf, 6);
+	}
 	program.header_record.newline = '\n';
 	program.text_records = array_new(sizeof(struct text_record), 1);
 	program.end_record.magic_number = 'E';
@@ -770,7 +789,6 @@ void place_literals(struct assembler_state* state)
 		if (literal->address == -1)
 		{
 			literal->address = *assembler_state_location_counter(state);
-			*assembler_state_location_counter(state) += 3;
 
 			unsigned int tmp = literal->value;
 			unsigned int len = 0;
@@ -786,6 +804,8 @@ void place_literals(struct assembler_state* state)
 			info.operation.opcode = (len + 7) / 8;
 			info.location = literal->value;
 			array_append(&state->line_infos, &info);
+
+			*assembler_state_location_counter(state) += info.operation.opcode;
 		}
 	}
 }

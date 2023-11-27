@@ -4,7 +4,7 @@
 
 static void dir_start(struct assembler_state* state, struct line_info* info)
 {
-	*assembler_state_location_counter(state) = 0; // set to actual value
+	*assembler_state_location_counter(state) = state->program_start = parse_operand_2(state, info->operand);
 	memcpy(state->program_name, info->label.start, info->label.length < 6 ? info->label.length : 6);
 }
 

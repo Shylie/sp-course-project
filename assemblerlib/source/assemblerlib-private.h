@@ -160,6 +160,15 @@ struct text_record
 	char newline;
 };
 
+struct modification_record
+{
+	char magic_number;
+	char modification_start[6];
+	char modification_length[2];
+	char modification_flag;
+	char external_symbol[6];
+};
+
 struct end_record
 {
 	char magic_number;

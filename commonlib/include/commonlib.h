@@ -40,5 +40,6 @@ void* map_get(struct map* m, const char* key);
 void *map_getn(struct map* m, const char* key, size_t keylen);
 void map_set(struct map* m, const char* key, const void* elem);
 void map_setn(struct map* m, const char* key, size_t keylen, const void* elem);
+void map_foreach(struct map* m, void (*fn)(const char* key, void* elem, void* ud), void* ud);
 
 #endif//COMMONLIB_H
