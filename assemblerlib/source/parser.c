@@ -11,10 +11,7 @@ enum
 
 static unsigned int map_max(const char* key, unsigned int* value, unsigned int* ud)
 {
-	if (*ud < *value)
-	{
-		*ud = *value;
-	}
+	*ud += *value;
 }
 
 static struct array split_file(struct str file)
@@ -211,10 +208,10 @@ char* parse_file(struct assembler_state* state, struct str source)
 		snprintf(buf, 7, "%.6X", state->program_start);
 		memcpy(program.header_record.program_start, buf, 6);
 
-		unsigned int maxloc = state->program_start;
+		unsigned int maxloc = 0;
 		map_foreach(&state->location_counters, map_max, &maxloc);
 
-		snprintf(buf, 7, "%.6X", maxloc - state->program_start);
+		snprintf(buf, 7, "%.6X", maxloc);
 		memcpy(program.header_record.program_length, buf, 6);
 	}
 	program.header_record.newline = '\n';
@@ -750,10 +747,6 @@ unsigned int calculate_target_address(struct line_info* info, long target)
 			info->flags[FLAG_B] = true;
 			target -= info->base;
 			code |= (0b00100 << 12);
-		}
-		else if (target >= 0 && target <= 4095)
-		{
-			// neither
 		}
 		else
 		{
