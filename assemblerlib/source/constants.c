@@ -35,6 +35,7 @@ struct assembler_state assembler_state_new(void)
 		.current_block = (struct str){ .start = DEFAULT_BLOCK_NAME, .length = DEFAULT_BLOCK_LENGTH },
 		.location_counters = map_new(sizeof(unsigned int)),
 		.literals = array_new(sizeof(struct literal_table_entry), 16),
+		.line_infos_blocks = map_new(sizeof(struct array)),
 		.program_name = { ' ', ' ', ' ', ' ', ' ', ' ' },
 		.program_start = 0,
 		.program_first_instruction = 0
@@ -173,6 +174,11 @@ struct assembler_state assembler_state_new(void)
 	return state;
 }
 
+static void array_del_wrap(const char* key, struct array* value, void* ud)
+{
+	array_del(value);
+}
+
 void assembler_state_del(struct assembler_state* state)
 {
 	map_del(&state->operation_table);
@@ -180,6 +186,10 @@ void assembler_state_del(struct assembler_state* state)
 	array_del(&state->line_infos);
 	map_del(&state->location_counters);
 	array_del(&state->literals);
+
+	map_foreach(&state->line_infos_blocks, array_del_wrap, NULL);
+
+	map_del(&state->line_infos_blocks);
 }
 
 unsigned int* assembler_state_location_counter(struct assembler_state* state)

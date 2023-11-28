@@ -9,9 +9,213 @@ enum
 	MAX_TEXT_RECORD_LENGTH = 60
 };
 
-static unsigned int map_max(const char* key, unsigned int* value, unsigned int* ud)
+static void total_size(const char* key, unsigned int* value, unsigned int* ud)
 {
 	*ud += *value;
+}
+
+struct asp
+{
+	struct assembler_state* state;
+	struct program* program;
+};
+
+static void emit_code(const char* key, struct array* value, struct asp* asp)
+{
+	{
+		struct text_record text;
+		memset(&text, '0', sizeof(text));
+		memset(&text.object_code, ' ', sizeof(text.object_code));
+		text.magic_number = 'T';
+		text.newline = '\n';
+		array_append(&asp->program->text_records, &text);
+	}
+
+	unsigned int text_record_start;
+	unsigned char text_record_address = 0;
+
+	for (unsigned int i = 0; i < array_size(value); i++)
+	{
+		const unsigned int info_index = *(unsigned int*)array_at(value, i);
+		struct line_info* info = array_at(&asp->state->line_infos, info_index);
+
+		if (i == 0)
+		{
+			text_record_start = info->location;
+		}
+
+		if (info->error || info->operation.format == 0) { continue; }
+
+		switch (info->operation.format)
+		{
+		case 1:
+		{
+			if (info->location + 1 >= text_record_start + MAX_TEXT_RECORD_LENGTH / 2)
+			{
+				finish_text_record(asp->program, text_record_start, text_record_start + text_record_address / 2);
+				text_record_start = info->location;
+				text_record_address = 0;
+			}
+
+			char c[3];
+			snprintf(c, 3, "%.2X", info->operation.opcode);
+			memcpy(current_record(asp->program)->object_code + text_record_address, c, 2);
+			text_record_address += 2;
+			break;
+		}
+
+		case 2:
+			if (info->operand.length == 3)
+			{
+				struct symbol_table_entry* r1 = map_getn(&asp->state->symbol_table, info->operand.start, 1);
+				struct symbol_table_entry* r2 = map_getn(&asp->state->symbol_table, info->operand.start + 2, 1);
+				if (r1 && r2)
+				{
+					if (info->location + 2 >= text_record_start + MAX_TEXT_RECORD_LENGTH / 2)
+					{
+						finish_text_record(asp->program, text_record_start, text_record_start + text_record_address / 2);
+						text_record_start = info->location;
+						text_record_address = 0;
+					}
+
+					char c[5];
+					snprintf(c, 5, "%.4X",
+						(info->operation.opcode << 8) | (r1->value << 4) | r2->value
+					);
+					memcpy(current_record(asp->program)->object_code + text_record_address, c, 4);
+					text_record_address += 4;
+					break;
+				}
+			}
+			else if (info->operand.length == 1)
+			{
+				struct symbol_table_entry* r1 = map_getn(&asp->state->symbol_table, info->operand.start, 1);
+				if (r1)
+				{
+					if (info->location + 2 >= text_record_start + MAX_TEXT_RECORD_LENGTH / 2)
+					{
+						finish_text_record(asp->program, text_record_start, text_record_start + text_record_address / 2);
+						text_record_start = info->location;
+						text_record_address = 0;
+					}
+
+					char c[5];
+					snprintf(c, 5, "%.4X",
+						(info->operation.opcode << 8) | (r1->value << 4)
+					);
+					memcpy(current_record(asp->program)->object_code + text_record_address, c, 4);
+					text_record_address += 4;
+					break;
+				}
+			}
+			info->error = "invalid register format";
+			break;
+
+		case 3:
+		{
+			unsigned int code = (info->operation.opcode << 16) & 0b111111000000000000000000;
+
+			if (info->operand.start)
+			{
+				long target = parse_operand_2(asp->state, info->operand);
+				code |= calculate_target_address(info, target);
+			}
+			else
+			{
+				code |= (0b110000 << 12);
+			}
+
+			if (info->error)
+			{
+				continue;
+			}
+
+			if (info->location + 3 >= text_record_start + MAX_TEXT_RECORD_LENGTH / 2)
+			{
+				finish_text_record(asp->program, text_record_start, text_record_start + text_record_address / 2);
+				text_record_start = info->location;
+				text_record_address = 0;
+			}
+
+			char c[7];
+			snprintf(c, 7, "%.6X", code);
+			memcpy(current_record(asp->program)->object_code + text_record_address, c, 6);
+			text_record_address += 6;
+			break;
+		}
+
+		case 4:
+		{
+			unsigned int code = (info->operation.opcode << 24) & 0b11111100000000000000000000000000;
+
+			if (info->operand.start)
+			{
+				long target = parse_operand_2(asp->state, info->operand);
+				code |= calculate_target_address(info, target);
+			}
+
+			if (info->location + 4 >= text_record_start + MAX_TEXT_RECORD_LENGTH / 2)
+			{
+				finish_text_record(asp->program, text_record_start, text_record_start + text_record_address / 2);
+				text_record_start = info->location;
+				text_record_address = 0;
+			}
+
+			char c[9];
+			snprintf(c, 9, "%.8X", code);
+			memcpy(current_record(asp->program)->object_code + text_record_address, c, 8);
+			text_record_address += 8;
+			break;
+		}
+
+		case 5:
+		{
+			const unsigned int len = info->operation.opcode;
+
+			if (len >= MAX_TEXT_RECORD_LENGTH / 2)
+			{
+				info->error = "constant too long";
+				continue;
+			}
+
+			if (text_record_address + 2 * len >= MAX_TEXT_RECORD_LENGTH)
+			{
+				finish_text_record(asp->program, text_record_start, text_record_start + text_record_address / 2);
+				text_record_start = info->location;
+				text_record_address = 0;
+			}
+
+			char c[61];
+			snprintf(c, 2 * len + 1, "%.*X", 2 * len, info->operand.start ? parse_operand_2(asp->state, info->operand) : info->location);
+			memcpy(current_record(asp->program)->object_code + text_record_address, c, 2 * len);
+			text_record_address += 2 * len;
+			break;
+		}
+
+		case 6:
+		{
+			if (text_record_address + 6 >= MAX_TEXT_RECORD_LENGTH)
+			{
+				finish_text_record(asp->program, text_record_start, text_record_start + text_record_address / 2);
+				text_record_start = info->location;
+				text_record_address = 0;
+			}
+
+			char c[7];
+			snprintf(c, 7, "%.6X", parse_operand_2(asp->state, info->operand));
+			memcpy(current_record(asp->program)->object_code + text_record_address, c, 6);
+			text_record_address += 6;
+			break;
+		}
+		}
+	}
+
+	if (text_record_address > 0)
+	{
+		finish_text_record(asp->program, text_record_start, text_record_start + text_record_address / 2);
+	}
+
+	array_remove(&asp->program->text_records, array_size(&asp->program->text_records) - 1);
 }
 
 static struct array split_file(struct str file)
@@ -166,8 +370,20 @@ char* parse_file(struct assembler_state* state, struct str source)
 		}
 
 		printf("%X\t%.*s\n", info->location, line.length, line.start);
+
+		struct array* arr = map_getn(&state->line_infos_blocks, state->current_block.start, state->current_block.length);
+		if (!arr)
+		{
+			// create array for block if it doesn't exist
+			struct array temp = array_new(sizeof(unsigned int), 16);
+			map_setn(&state->line_infos_blocks, state->current_block.start, state->current_block.length, &temp);
+
+			arr = map_getn(&state->line_infos_blocks, state->current_block.start, state->current_block.length);
+		}
+
+		array_append(arr, &i);
 	}
-	place_literals(state);
+	place_literals(state, true);
 
 	// pass 2
 	for (unsigned int i = 0; i < array_size(&state->line_infos); i++)
@@ -209,7 +425,7 @@ char* parse_file(struct assembler_state* state, struct str source)
 		memcpy(program.header_record.program_start, buf, 6);
 
 		unsigned int maxloc = 0;
-		map_foreach(&state->location_counters, map_max, &maxloc);
+		map_foreach(&state->location_counters, total_size, &maxloc);
 
 		snprintf(buf, 7, "%.6X", maxloc);
 		memcpy(program.header_record.program_length, buf, 6);
@@ -225,197 +441,14 @@ char* parse_file(struct assembler_state* state, struct str source)
 	program.end_record.newline = '\n';
 
 	{
-		struct text_record text;
-		memset(&text, '0', sizeof(text));
-		memset(&text.object_code, ' ', sizeof(text.object_code));
-		text.magic_number = 'T';
-		text.newline = '\n';
-		array_append(&program.text_records, &text);
+		struct asp asp =
+		{
+			.program = &program,
+			.state = state
+		};
+
+		map_foreach(&state->line_infos_blocks, emit_code, &asp);
 	}
-
-	unsigned int text_record_start;
-	unsigned char text_record_address = 0;
-
-	for (unsigned int i = 0; i < array_size(&state->line_infos); i++)
-	{
-		struct line_info* info = array_at(&state->line_infos, i);
-
-		if (i == 0)
-		{
-			text_record_start = info->location;
-		}
-
-		if (info->error || info->operation.format == 0) { continue; }
-
-		switch (info->operation.format)
-		{
-		case 1:
-		{
-			if (info->location + 1 >= text_record_start + MAX_TEXT_RECORD_LENGTH / 2)
-			{
-				finish_text_record(&program, text_record_start, text_record_start + text_record_address / 2);
-				text_record_start = info->location;
-				text_record_address = 0;
-			}
-
-			char c[3];
-			snprintf(c, 3, "%.2X", info->operation.opcode);
-			memcpy(current_record(&program)->object_code + text_record_address, c, 2);
-			text_record_address += 2;
-			break;
-		}
-
-		case 2:
-			if (info->operand.length == 3)
-			{
-				struct symbol_table_entry* r1 = map_getn(&state->symbol_table, info->operand.start, 1);
-				struct symbol_table_entry* r2 = map_getn(&state->symbol_table, info->operand.start + 2, 1);
-				if (r1 && r2)
-				{
-					if (info->location + 2 >= text_record_start + MAX_TEXT_RECORD_LENGTH / 2)
-					{
-						finish_text_record(&program, text_record_start, text_record_start + text_record_address / 2);
-						text_record_start = info->location;
-						text_record_address = 0;
-					}
-
-					char c[5];
-					snprintf(c, 5, "%.4X",
-						(info->operation.opcode << 8) | (r1->value << 4) | r2->value
-					);
-					memcpy(current_record(&program)->object_code + text_record_address, c, 4);
-					text_record_address += 4;
-					break;
-				}
-			}
-			else if (info->operand.length == 1)
-			{
-				struct symbol_table_entry* r1 = map_getn(&state->symbol_table, info->operand.start, 1);
-				if (r1)
-				{
-					if (info->location + 2 >= text_record_start + MAX_TEXT_RECORD_LENGTH / 2)
-					{
-						finish_text_record(&program, text_record_start, text_record_start + text_record_address / 2);
-						text_record_start = info->location;
-						text_record_address = 0;
-					}
-
-					char c[5];
-					snprintf(c, 5, "%.4X",
-						(info->operation.opcode << 8) | (r1->value << 4)
-					);
-					memcpy(current_record(&program)->object_code + text_record_address, c, 4);
-					text_record_address += 4;
-					break;
-				}
-			}
-			info->error = "invalid register format";
-			break;
-
-		case 3:
-		{
-			unsigned int code = (info->operation.opcode << 16) & 0b111111000000000000000000;
-
-			if (info->operand.start)
-			{
-				long target = parse_operand_2(state, info->operand);
-				code |= calculate_target_address(info, target);
-			}
-			else
-			{
-				code |= (0b110000 << 12);
-			}
-
-			if (info->error)
-			{
-				continue;
-			}
-
-			if (info->location + 3 >= text_record_start + MAX_TEXT_RECORD_LENGTH / 2)
-			{
-				finish_text_record(&program, text_record_start, text_record_start + text_record_address / 2);
-				text_record_start = info->location;
-				text_record_address = 0;
-			}
-
-			char c[7];
-			snprintf(c, 7, "%.6X", code);
-			memcpy(current_record(&program)->object_code + text_record_address, c, 6);
-			text_record_address += 6;
-			break;
-		}
-
-		case 4:
-		{
-			unsigned int code = (info->operation.opcode << 24) & 0b11111100000000000000000000000000;
-
-			if (info->operand.start)
-			{
-				long target = parse_operand_2(state, info->operand);
-				code |= calculate_target_address(info, target);
-			}
-
-			if (info->location + 4 >= text_record_start + MAX_TEXT_RECORD_LENGTH / 2)
-			{
-				finish_text_record(&program, text_record_start, text_record_start + text_record_address / 2);
-				text_record_start = info->location;
-				text_record_address = 0;
-			}
-
-			char c[9];
-			snprintf(c, 9, "%.8X", code);
-			memcpy(current_record(&program)->object_code + text_record_address, c, 8);
-			text_record_address += 8;
-			break;
-		}
-
-		case 5:
-		{
-			const unsigned int len = info->operation.opcode;
-
-			if (len >= MAX_TEXT_RECORD_LENGTH / 2)
-			{
-				info->error = "constant too long";
-				continue;
-			}
-			
-			if (text_record_address + 2 * len >= MAX_TEXT_RECORD_LENGTH)
-			{
-				finish_text_record(&program, text_record_start, text_record_start + text_record_address / 2);
-				text_record_start = info->location;
-				text_record_address = 0;
-			}
-
-			char c[61];
-			snprintf(c, 2 * len + 1, "%.*X", 2 * len, info->operand.start ? parse_operand_2(state, info->operand) : info->location);
-			memcpy(current_record(&program)->object_code + text_record_address, c, 2 * len);
-			text_record_address += 2 * len;
-			break;
-		}
-
-		case 6:
-		{
-			if (text_record_address + 6 >= MAX_TEXT_RECORD_LENGTH)
-			{
-				finish_text_record(&program, text_record_start, text_record_start + text_record_address / 2);
-				text_record_start = info->location;
-				text_record_address = 0;
-			}
-
-			char c[7];
-			snprintf(c, 7, "%.6X", parse_operand_2(state, info->operand));
-			memcpy(current_record(&program)->object_code + text_record_address, c, 6);
-			text_record_address += 6;
-			break;
-		}
-		}
-	}
-
-	if (text_record_address > 0)
-	{
-		finish_text_record(&program, text_record_start, text_record_start + text_record_address / 2);
-	}
-	array_remove(&program.text_records, array_size(&program.text_records) - 1);
 
 	bool err = false;
 	for (int i = 0; i < array_size(&state->line_infos); i++)
@@ -774,13 +807,15 @@ unsigned int calculate_target_address(struct line_info* info, long target)
 	return code;
 }
 
-void place_literals(struct assembler_state* state)
+void place_literals(struct assembler_state* state, bool add_to_block)
 {
 	for (size_t i = 0; i < array_size(&state->literals); i++)
 	{
 		struct literal_table_entry* literal = array_at(&state->literals, i);
 		if (literal->address == -1)
 		{
+			const unsigned int line_index = array_size(&state->line_infos);
+
 			literal->address = *assembler_state_location_counter(state);
 
 			unsigned int tmp = literal->value;
@@ -799,6 +834,21 @@ void place_literals(struct assembler_state* state)
 			array_append(&state->line_infos, &info);
 
 			*assembler_state_location_counter(state) += info.operation.opcode;
+
+			if (add_to_block)
+			{
+				struct array* arr = map_getn(&state->line_infos_blocks, state->current_block.start, state->current_block.length);
+				if (!arr)
+				{
+					// create array for block if it doesn't exist
+					struct array temp = array_new(sizeof(unsigned int), 16);
+					map_setn(&state->line_infos_blocks, state->current_block.start, state->current_block.length, &temp);
+
+					arr = map_getn(&state->line_infos_blocks, state->current_block.start, state->current_block.length);
+				}
+
+				array_append(arr, &line_index);
+			}
 		}
 	}
 }

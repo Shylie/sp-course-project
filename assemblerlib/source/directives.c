@@ -87,7 +87,7 @@ static void dir_use(struct assembler_state* state, struct line_info* info)
 
 static void dir_ltorg(struct assembler_state* state, struct line_info* info)
 {
-	place_literals(state);
+	place_literals(state, false);
 }
 
 static void dir_macro(struct assembler_state* state, struct line_info* info)

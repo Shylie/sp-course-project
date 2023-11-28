@@ -137,6 +137,7 @@ struct assembler_state
 	struct str current_block;
 	struct map location_counters;
 	struct array literals;
+	struct map line_infos_blocks;
 	char program_name[6];
 	unsigned int program_start;
 	unsigned int program_first_instruction;
@@ -194,7 +195,7 @@ void  parse_label(struct assembler_state* state, struct str label, unsigned int 
 void  parse_operation(struct assembler_state* state, struct str operation, unsigned int linenum);
 void  parse_operand(struct assembler_state* state, struct str operand, unsigned int linenum);
 unsigned int parse_operand_2(struct assembler_state* state, struct str operand);
-void place_literals(struct assembler_state* state);
+void place_literals(struct assembler_state* state, bool add_to_block);
 
 unsigned int calculate_target_address(struct line_info* info, long target);
 void finish_text_record(struct program* p, unsigned int start, unsigned int end);
