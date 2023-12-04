@@ -185,7 +185,7 @@ static void emit_code(const char* key, struct array* value, struct asp* asp)
 				text_record_address = 0;
 			}
 
-			char c[61];
+			char c[MAX_TEXT_RECORD_LENGTH + 1];
 			snprintf(c, 2 * len + 1, "%.*X", 2 * len, info->operand.start ? parse_operand_2(asp->state, info->operand) : info->location);
 			memcpy(current_record(asp->program)->object_code + text_record_address, c, 2 * len);
 			text_record_address += 2 * len;
@@ -369,7 +369,7 @@ char* parse_file(struct assembler_state* state, struct str source)
 			*assembler_state_location_counter(state) += info->operation.format;
 		}
 
-		printf("%X\t%.*s\n", info->location, line.length, line.start);
+		//printf("%X\t%.*s\n", info->location, line.length, line.start);
 
 		struct array* arr = map_getn(&state->line_infos_blocks, state->current_block.start, state->current_block.length);
 		if (!arr)
@@ -392,7 +392,7 @@ char* parse_file(struct assembler_state* state, struct str source)
 		{
 			struct symbol_table_entry entry =
 			{
-				.line_number = i,
+				.line_number = info->line_number,
 				.value = info->location
 			};
 			map_set(&state->symbol_table, "*", &entry);
