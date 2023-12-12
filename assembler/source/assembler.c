@@ -5,12 +5,14 @@
 
 int main(int argc, char** argv)
 {
+	printf("\n");
+
 	char* file = (argc == 2) ? argv[1] : "literals.txt";
 
 	char* c = assemble(file);
 	if (c)
 	{
-		printf("%s\n", c);
+		printf("\n%s\n", c);
 
 		FILE* output_file = fopen("out.txt", "wb");
 

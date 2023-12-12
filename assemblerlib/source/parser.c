@@ -61,6 +61,8 @@ static void emit_code(const char* key, struct array* value, struct asp* asp)
 			snprintf(c, 3, "%.2X", info->operation.opcode);
 			memcpy(current_record(asp->program)->object_code + text_record_address, c, 2);
 			text_record_address += 2;
+
+			printf("%X\t%.*s\t%s\n", info->location, (int)info->line.length, info->line.start, c);
 			break;
 		}
 
@@ -84,6 +86,8 @@ static void emit_code(const char* key, struct array* value, struct asp* asp)
 					);
 					memcpy(current_record(asp->program)->object_code + text_record_address, c, 4);
 					text_record_address += 4;
+
+					printf("%X\t%.*s\t%s\n", info->location, (int)info->line.length, info->line.start, c);
 					break;
 				}
 			}
@@ -105,6 +109,8 @@ static void emit_code(const char* key, struct array* value, struct asp* asp)
 					);
 					memcpy(current_record(asp->program)->object_code + text_record_address, c, 4);
 					text_record_address += 4;
+
+					printf("%X\t%.*s\t%s\n", info->location, (int)info->line.length, info->line.start, c);
 					break;
 				}
 			}
@@ -141,6 +147,8 @@ static void emit_code(const char* key, struct array* value, struct asp* asp)
 			snprintf(c, 7, "%.6X", code);
 			memcpy(current_record(asp->program)->object_code + text_record_address, c, 6);
 			text_record_address += 6;
+
+			printf("%X\t%.*s\t%s\n", info->location, (int)info->line.length, info->line.start, c);
 			break;
 		}
 
@@ -165,6 +173,8 @@ static void emit_code(const char* key, struct array* value, struct asp* asp)
 			snprintf(c, 9, "%.8X", code);
 			memcpy(current_record(asp->program)->object_code + text_record_address, c, 8);
 			text_record_address += 8;
+
+			printf("%X\t%.*s\t%s\n", info->location, (int)info->line.length, info->line.start, c);
 			break;
 		}
 
@@ -189,6 +199,8 @@ static void emit_code(const char* key, struct array* value, struct asp* asp)
 			snprintf(c, 2 * len + 1, "%.*X", 2 * len, info->operand.start ? parse_operand_2(asp->state, info->operand) : info->location);
 			memcpy(current_record(asp->program)->object_code + text_record_address, c, 2 * len);
 			text_record_address += 2 * len;
+
+			printf("%X\t%.*s\t%s\n", info->location, (int)info->line.length, info->line.start, c);
 			break;
 		}
 
@@ -205,6 +217,8 @@ static void emit_code(const char* key, struct array* value, struct asp* asp)
 			snprintf(c, 7, "%.6X", parse_operand_2(asp->state, info->operand));
 			memcpy(current_record(asp->program)->object_code + text_record_address, c, 6);
 			text_record_address += 6;
+
+			printf("%X\t%.*s\t%s\n", info->location, (int)info->line.length, info->line.start, c);
 			break;
 		}
 		}
@@ -369,8 +383,6 @@ char* parse_file(struct assembler_state* state, struct str source)
 			*assembler_state_location_counter(state) += info->operation.format;
 		}
 
-		//printf("%X\t%.*s\n", info->location, line.length, line.start);
-
 		struct array* arr = map_getn(&state->line_infos_blocks, state->current_block.start, state->current_block.length);
 		if (!arr)
 		{
@@ -456,7 +468,7 @@ char* parse_file(struct assembler_state* state, struct str source)
 		struct line_info* info = array_at(&state->line_infos, i);
 		if (info->error)
 		{
-			fprintf(stderr, "[line %d]: %.*s\n%s\n\n", i, info->line.length - 1, info->line.start, info->error);
+			fprintf(stderr, "[line %d]: %.*s\n%s\n\n", info->line_number, (int)info->line.length - 1, info->line.start, info->error);
 
 			err = true;
 		}
