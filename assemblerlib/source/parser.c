@@ -62,7 +62,7 @@ static void emit_code(const char* key, struct array* value, struct asp* asp)
 			memcpy(current_record(asp->program)->object_code + text_record_address, c, 2);
 			text_record_address += 2;
 
-			printf("%X\t%.*s\t%s\n", info->location, (int)info->line.length, info->line.start, c);
+			printf("%.3d\t%.4X\t%.*s\t%s\n", info->line_number, info->location, (int)info->line.length, info->line.start, c);
 			break;
 		}
 
@@ -87,7 +87,7 @@ static void emit_code(const char* key, struct array* value, struct asp* asp)
 					memcpy(current_record(asp->program)->object_code + text_record_address, c, 4);
 					text_record_address += 4;
 
-					printf("%X\t%.*s\t%s\n", info->location, (int)info->line.length, info->line.start, c);
+					printf("%.3d\t%.4X\t%.*s\t%s\n", info->line_number, info->location, (int)info->line.length, info->line.start, c);
 					break;
 				}
 			}
@@ -110,7 +110,7 @@ static void emit_code(const char* key, struct array* value, struct asp* asp)
 					memcpy(current_record(asp->program)->object_code + text_record_address, c, 4);
 					text_record_address += 4;
 
-					printf("%X\t%.*s\t%s\n", info->location, (int)info->line.length, info->line.start, c);
+					printf("%.3d\t%.4X\t%.*s\t%s\n", info->line_number, info->location, (int)info->line.length, info->line.start, c);
 					break;
 				}
 			}
@@ -148,7 +148,7 @@ static void emit_code(const char* key, struct array* value, struct asp* asp)
 			memcpy(current_record(asp->program)->object_code + text_record_address, c, 6);
 			text_record_address += 6;
 
-			printf("%X\t%.*s\t%s\n", info->location, (int)info->line.length, info->line.start, c);
+			printf("%.3d\t%.4X\t%.*s\t%s\n", info->line_number, info->location, (int)info->line.length, info->line.start, c);
 			break;
 		}
 
@@ -174,7 +174,7 @@ static void emit_code(const char* key, struct array* value, struct asp* asp)
 			memcpy(current_record(asp->program)->object_code + text_record_address, c, 8);
 			text_record_address += 8;
 
-			printf("%X\t%.*s\t%s\n", info->location, (int)info->line.length, info->line.start, c);
+			printf("%.3d\t%.4X\t%.*s\t%s\n", info->line_number, info->location, (int)info->line.length, info->line.start, c);
 			break;
 		}
 
@@ -200,7 +200,7 @@ static void emit_code(const char* key, struct array* value, struct asp* asp)
 			memcpy(current_record(asp->program)->object_code + text_record_address, c, 2 * len);
 			text_record_address += 2 * len;
 
-			printf("%X\t%.*s\t%s\n", info->location, (int)info->line.length, info->line.start, c);
+			printf("%.3d\t%.4X\t%.*s\t%s\n", info->line_number, info->location, (int)info->line.length, info->line.start, c);
 			break;
 		}
 
@@ -218,7 +218,7 @@ static void emit_code(const char* key, struct array* value, struct asp* asp)
 			memcpy(current_record(asp->program)->object_code + text_record_address, c, 6);
 			text_record_address += 6;
 
-			printf("%X\t%.*s\t%s\n", info->location, (int)info->line.length, info->line.start, c);
+			printf("%.3d\t%.4X\t%.*s\t%s\n", info->line_number, info->location, (int)info->line.length, info->line.start, c);
 			break;
 		}
 		}
