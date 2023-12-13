@@ -779,7 +779,11 @@ unsigned int calculate_target_address(struct line_info* info, long target)
 		{
 			// immediate mode is neither pc nor base relative by default
 		}
-		else if (target - (long)info->location >= -2047 && target - (long)info->location <= 2048)
+		else if
+		(
+			target - (long)info->location - info->operation.format >= -2048 &&
+			target - (long)info->location - info->operation.format <=  2047
+		)
 		{
 			// pc relative
 			info->flags[FLAG_P] = true;
