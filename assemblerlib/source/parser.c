@@ -123,7 +123,7 @@ static void emit_code(const char* key, struct array* value, struct asp* asp)
 
 			if (info->operand.start)
 			{
-				long target = parse_operand_2(asp->state, info->operand);
+				long target = get_operand_value(asp->state, info->operand);
 				code |= calculate_target_address(info, target);
 			}
 			else
@@ -158,7 +158,7 @@ static void emit_code(const char* key, struct array* value, struct asp* asp)
 
 			if (info->operand.start)
 			{
-				long target = parse_operand_2(asp->state, info->operand);
+				long target = get_operand_value(asp->state, info->operand);
 				code |= calculate_target_address(info, target);
 			}
 
@@ -196,7 +196,7 @@ static void emit_code(const char* key, struct array* value, struct asp* asp)
 			}
 
 			char c[MAX_TEXT_RECORD_LENGTH + 1];
-			snprintf(c, 2 * len + 1, "%.*X", 2 * len, info->operand.start ? parse_operand_2(asp->state, info->operand) : info->location);
+			snprintf(c, 2 * len + 1, "%.*X", 2 * len, info->operand.start ? get_operand_value(asp->state, info->operand) : info->location);
 			memcpy(current_record(asp->program)->object_code + text_record_address, c, 2 * len);
 			text_record_address += 2 * len;
 
@@ -214,7 +214,7 @@ static void emit_code(const char* key, struct array* value, struct asp* asp)
 			}
 
 			char c[7];
-			snprintf(c, 7, "%.6X", parse_operand_2(asp->state, info->operand));
+			snprintf(c, 7, "%.6X", get_operand_value(asp->state, info->operand));
 			memcpy(current_record(asp->program)->object_code + text_record_address, c, 6);
 			text_record_address += 6;
 
@@ -587,7 +587,7 @@ void parse_operand(struct assembler_state* state, struct str operand, unsigned i
 			info->flags[FLAG_I] = true;
 			info->flags[FLAG_X] = false;
 
-			const unsigned int value = parse_operand_2(
+			const unsigned int value = get_operand_value(
 				state,
 				(struct str) {
 				.start = operand.start + 1, .length = operand.length - 1
@@ -626,11 +626,11 @@ void parse_operand(struct assembler_state* state, struct str operand, unsigned i
 	info->operand = operand;
 }
 
-unsigned int parse_operand_2(struct assembler_state* state, struct str s)
+unsigned int get_operand_value(struct assembler_state* state, struct str s)
 {
 	if (s.start[0] == '=')
 	{
-		const unsigned int value = parse_operand_2(
+		const unsigned int value = get_operand_value(
 			state,
 			(struct str){ .start = s.start + 1, .length = s.length - 1 }
 		);
@@ -715,7 +715,7 @@ unsigned int parse_operand_2(struct assembler_state* state, struct str s)
 			unsigned int value = 0;
 			if (array_size(&tokens) >= 3 && array_size(&tokens) % 2 == 1)
 			{
-				value = parse_operand_2(state, *(struct str*)array_at(&tokens, 0));
+				value = get_operand_value(state, *(struct str*)array_at(&tokens, 0));
 				for (int current = 1; current + 1 < array_size(&tokens); current += 2)
 				{
 					struct str operation = *(struct str*)array_at(&tokens, current);
@@ -724,10 +724,10 @@ unsigned int parse_operand_2(struct assembler_state* state, struct str s)
 					switch (operation.start[0])
 					{
 					case '+':
-						value += parse_operand_2(state, operand);
+						value += get_operand_value(state, operand);
 
 					case '-':
-						value -= parse_operand_2(state, operand);
+						value -= get_operand_value(state, operand);
 						break;
 
 					default:

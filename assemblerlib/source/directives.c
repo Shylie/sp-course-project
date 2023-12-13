@@ -4,7 +4,7 @@
 
 static void dir_start(struct assembler_state* state, struct line_info* info)
 {
-	*assembler_state_location_counter(state) = state->program_start = parse_operand_2(state, info->operand);
+	*assembler_state_location_counter(state) = state->program_start = get_operand_value(state, info->operand);
 	memcpy(state->program_name, info->label.start, info->label.length < 6 ? info->label.length : 6);
 }
 
@@ -24,7 +24,7 @@ static void dir_end(struct assembler_state* state, struct line_info* info)
 static void dir_byte(struct assembler_state* state, struct line_info* info)
 {
 	info->operation.format = 5;
-	unsigned int tmp = parse_operand_2(state, info->operand);
+	unsigned int tmp = get_operand_value(state, info->operand);
 
 	unsigned int len = 0;
 	while (tmp > 0)
@@ -41,24 +41,24 @@ static void dir_byte(struct assembler_state* state, struct line_info* info)
 static void dir_word(struct assembler_state* state, struct line_info* info)
 {
 	info->operation.format = 6;
-	info->operation.opcode = parse_operand_2(state, info->operand);
+	info->operation.opcode = get_operand_value(state, info->operand);
 
 	*assembler_state_location_counter(state) += 3;
 }
 
 static void dir_resb(struct assembler_state* state, struct line_info* info)
 {
-	*assembler_state_location_counter(state) += parse_operand_2(state, info->operand);
+	*assembler_state_location_counter(state) += get_operand_value(state, info->operand);
 }
 
 static void dir_resw(struct assembler_state* state, struct line_info* info)
 {
-	*assembler_state_location_counter(state) += 3 * parse_operand_2(state, info->operand);
+	*assembler_state_location_counter(state) += 3 * get_operand_value(state, info->operand);
 }
 
 static void dir_base(struct assembler_state* state, struct line_info* info)
 {
-	info->base = parse_operand_2(state, info->operand);
+	info->base = get_operand_value(state, info->operand);
 }
 
 static void dir_unbase(struct assembler_state* state, struct line_info* info)
@@ -111,7 +111,7 @@ static void dir_equ(struct assembler_state* state, struct line_info* info)
 	struct symbol_table_entry entry =
 	{
 		.line_number = UINT_MAX,
-		.value = parse_operand_2(state, info->operand)
+		.value = get_operand_value(state, info->operand)
 	};
 	map_setn(&state->symbol_table, info->label.start, info->label.length, &entry);
 }

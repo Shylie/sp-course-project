@@ -194,7 +194,7 @@ void  parse_line(struct assembler_state* state, struct str line, unsigned int li
 void  parse_label(struct assembler_state* state, struct str label, unsigned int linenum);
 void  parse_operation(struct assembler_state* state, struct str operation, unsigned int linenum);
 void  parse_operand(struct assembler_state* state, struct str operand, unsigned int linenum);
-unsigned int parse_operand_2(struct assembler_state* state, struct str operand);
+unsigned int get_operand_value(struct assembler_state* state, struct str operand);
 void place_literals(struct assembler_state* state, bool add_to_block);
 
 unsigned int calculate_target_address(struct line_info* info, long target);
