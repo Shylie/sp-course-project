@@ -34,5 +34,4 @@
 
 ## Documentation
 
-- [SIC](documentation/SIC.md)
 - [SIC/XE](documentation/SICXE.md)

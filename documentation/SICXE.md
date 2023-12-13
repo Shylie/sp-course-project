@@ -1,5 +1,9 @@
 # SIC/XE Machine Architecture
 
+All the information included was taken from the book *System Software: An Introduction To Systems Programming (1997)* written by Leland L. Beck. 
+
+The purpose of the document is to serve as quick reference on the specifications of SIC/XE Machine Architecture during the implementation process of an assembler for the machine's ISA.
+
 ## Specifications
 
 ### Memory:
@@ -204,10 +208,10 @@ and End.
 |--------|-------------|
 | Header | Contains the program name, starting address, and length. |
 | Text   | Contains the translated (i.e., machine code) instructions and data of the program, together with an indication of the addresses where these are to be loaded. |
-| End    | Marks the end of the object program and specifies the address in the program where execution is to begin.* |
+| Modification | Specifies the starting address and length of the field whose value is to be altered and the modification to be perfromed. |
+| End    | Marks the end of the object program and specifies the address in the program where execution is to begin. |
 
-* This is taken from the operand of the program's End statement. If no operand is
-  specified, the address of the first executable instruction is used.
+* This is taken from the operand of the program's End statement. If no operand is specified, the address of the first executable instruction is used.
 
 The formats used for the record are as follows:
 
@@ -220,7 +224,7 @@ The formats used for the record are as follows:
 | Col. 8-13  | Starting address of the object program (hexadecimal) |
 | Col. 14-19 | Length of object program in bytes (hexadecimal) |
 
-##### Text record:
+#### Text record:
 
 | Column | Contents |
 |--------|----------|
@@ -229,7 +233,18 @@ The formats used for the record are as follows:
 | Col. 8-9   | Length of object code in this record in bytes (hexadecimal) |
 | Col. 10-69 | Object code, represented in hexadecimal (2 columns per byte of object code) |
 
-##### End record:
+#### Modification record:
+| Column | Contents|
+|---------|----------|
+| Col. 1 | M |
+| Col. 2-7 | Address of the field to be modified relative to the starting address of the program (hexadecimal). |
+| Col. 8-9 | Length of the field to be modified in half-bytes (hexadecimal). |
+| Col. 10 | Modification flag (+ or -). |
+| Col. 11-16 | External symbol whose value is to be added to or subtracted from the indicated field. |
+
+*relying on Modification record scheme in circumstances when implementing assembly for a machine that primarily uses direct addressing and fixed instruction format is quite inefficient as it produces larger object program due to all the addresses in all the instructions must be modified when the program is relocated. In such cases it is preferable to look into other methods to specify relocation (relocation bit masks).
+
+#### End record:
 
 | Column | Contents |
 |--------|----------|
