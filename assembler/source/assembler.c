@@ -23,7 +23,5 @@ int main(int argc, char** argv)
 		free(c);
 	}
 
-	getchar();
-
 	return (c ? EXIT_SUCCESS : EXIT_FAILURE);
 }
